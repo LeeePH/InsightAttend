@@ -63,8 +63,8 @@
                                         <tr>
                                             <td> {{ $schedule->id }} </td>
                                             <td> {{ $schedule->slug }} </td>
-                                            <td> {{ $schedule->time_in }} </td>
-                                            <td> {{ $schedule->time_out }} </td>
+                                            <td> {{ \Carbon\Carbon::parse($schedule->time_in)->format('g:i A') }} </td>
+                                            <td> {{ \Carbon\Carbon::parse($schedule->time_out)->format('g:i A') }} </td>
                                             <td>
 
                                                 <a href="#edit{{ $schedule->slug }}" data-toggle="modal"

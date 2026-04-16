@@ -56,8 +56,13 @@
                                     <td>{{ $latetime->emp_id }}</td>
                                     <td>{{ $latetime->employee->name }}</td>
                                     <td>{{ $latetime->duration }}</td>
-                                    <td>{{ $latetime->employee->schedules->first()->time_in }} </td>
-                                    <td>{{ $latetime->employee->schedules->first()->time_out }}</td>
+                                    <td>
+                                        @php $sched = $latetime->employee->schedules->first(); @endphp
+                                        {{ $sched?->time_in ? \Carbon\Carbon::parse($sched->time_in)->format('g:i A') : '—' }}
+                                    </td>
+                                    <td>
+                                        {{ $sched?->time_out ? \Carbon\Carbon::parse($sched->time_out)->format('g:i A') : '—' }}
+                                    </td>
                                 </tr>
 
                                 @endforeach

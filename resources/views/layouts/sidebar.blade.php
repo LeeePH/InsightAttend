@@ -26,11 +26,6 @@
                             <li class="menu-title">Management</li>
 
                             <li class="">
-                                <a href="{{ route('admin.maintenance_form') }}" class="waves-effect {{ request()->is("admin/maintenance-form") ? "mm active" : "" }}">
-                                    <i class="fa fa-file-text"></i> <span> Maintenance Form </span>
-                                </a>
-                            </li>
-                            <li class="">
                                 <a href="/schedule" class="waves-effect {{ request()->is("schedule") || request()->is("schedule/*") ? "mm active" : "" }}">
                                     <i class="ti-time"></i> <span> Schedule </span>
                                 </a>
@@ -46,35 +41,49 @@
                                     <i class="ti-calendar"></i> <span> Attendance Logs </span>
                                 </a>
                             </li>
-                            <li class="">
-                                <a href="/leave" class="waves-effect {{ request()->is("leave") || request()->is("leave/*") ? "mm active" : "" }}">
-                                    <i class="dripicons-backspace"></i> <span> Leave </span>
+                            <li class="{{ (request()->is('leave') || request()->is('leave/*') || request()->is('resignation') || request()->is('resignation/*')) ? 'mm-active' : '' }}">
+                                <a href="javascript:void(0);" class="has-arrow waves-effect {{ (request()->is('leave') || request()->is('leave/*') || request()->is('resignation') || request()->is('resignation/*')) ? 'mm active' : '' }}">
+                                    <i class="dripicons-backspace"></i> <span> Requests </span>
                                 </a>
+                                <ul class="submenu" aria-expanded="false">
+                                    <li>
+                                        <a href="/leave" class="waves-effect {{ (request()->is('leave') || request()->is('leave/*')) ? 'mm active' : '' }}">
+                                            <span>Leave</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="{{ route('resignation.admin') }}" class="waves-effect {{ (request()->is('resignation') || request()->is('resignation/*')) ? 'mm active' : '' }}">
+                                            <span>Resignation</span>
+                                        </a>
+                                    </li>
+                                </ul>
                             </li>
-                            <li class="">
-                                <a href="{{ route('resignation.admin') }}" class="waves-effect {{ request()->is("resignation") || request()->is("resignation/*") ? "mm active" : "" }}">
-                                    <i class="dripicons-exit"></i> <span> Resignation </span>
+                            <li class="{{ (request()->is('admin/maintenance-form') || request()->is('admin/feedback') || request()->is('admin/backups') || request()->is('admin/user-management') || request()->is('admin/audit-logs')) ? 'mm-active' : '' }}">
+                                <a href="javascript:void(0);" class="has-arrow waves-effect {{ (request()->is('admin/maintenance-form') || request()->is('admin/backups') || request()->is('admin/user-management') || request()->is('admin/audit-logs')) ? 'mm active' : '' }}">
+                                    <i class="fa fa-cog"></i> <span> Settings </span>
                                 </a>
-                            </li>
-                            <li class="">
-                                <a href="{{ route('admin.feedback') }}" class="waves-effect {{ request()->is("admin/feedback") ? "mm active" : "" }}">
-                                    <i class="fa fa-comment"></i> <span> Feedback </span>
-                                </a>
-                            </li>
-                            <li class="">
-                                <a href="{{ route('admin.backups') }}" class="waves-effect {{ request()->is("admin/backups") ? "mm active" : "" }}">
-                                    <i class="fa fa-database"></i> <span> Backups </span>
-                                </a>
-                            </li>
-                            <li class="">
-                                <a href="{{ route('admin.user_management') }}" class="waves-effect {{ request()->is("admin/user-management") ? "mm active" : "" }}">
-                                    <i class="fa fa-users"></i> <span> User Management </span>
-                                </a>
-                            </li>
-                            <li class="">
-                                <a href="{{ route('admin.audit_logs') }}" class="waves-effect {{ request()->is("admin/audit-logs") ? "mm active" : "" }}">
-                                    <i class="fa fa-history"></i> <span> Audit Log </span>
-                                </a>
+                                <ul class="submenu" aria-expanded="false">
+                                    <li>
+                                        <a href="{{ route('admin.maintenance_form') }}" class="waves-effect {{ request()->is('admin/maintenance-form') ? 'mm active' : '' }}">
+                                            <span>Maintenance Form</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="{{ route('admin.backups') }}" class="waves-effect {{ request()->is('admin/backups') ? 'mm active' : '' }}">
+                                            <span>Backups</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="{{ route('admin.user_management') }}" class="waves-effect {{ request()->is('admin/user-management') ? 'mm active' : '' }}">
+                                            <span>User Management</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="{{ route('admin.audit_logs') }}" class="waves-effect {{ request()->is('admin/audit-logs') ? 'mm active' : '' }}">
+                                            <span>Audit Trail</span>
+                                        </a>
+                                    </li>
+                                </ul>
                             </li>
                             {{-- <li class="menu-title">Tools</li>
                             <li class="">
@@ -90,19 +99,31 @@
                                 </a>
                             </li>
                             <li class="">
-                                <a href="{{ route('leave.request') }}" class="waves-effect {{ request()->is("leave/request") ? "mm active" : "" }}">
-                                    <i class="dripicons-backspace"></i> <span> Request Leave </span>
+                                <a href="{{ route('employee.settings') }}" class="waves-effect {{ request()->is("employee/settings") ? "mm active" : "" }}">
+                                    <i class="fa fa-cog"></i> <span> Settings </span>
                                 </a>
                             </li>
                             <li class="">
-                                <a href="{{ route('resignation.request') }}" class="waves-effect {{ request()->is("resignation/request") ? "mm active" : "" }}">
-                                    <i class="dripicons-exit"></i> <span> Resignation Request </span>
+                                <a href="{{ route('employee.attendance_logs') }}" class="waves-effect {{ request()->is("employee/attendance-logs") ? "mm active" : "" }}">
+                                    <i class="ti-calendar"></i> <span> Attendance Logs </span>
                                 </a>
                             </li>
-                            <li class="">
-                                <a href="{{ route('employee.feedback') }}" class="waves-effect {{ request()->is("employee/feedback") ? "mm active" : "" }}">
-                                    <i class="fa fa-comment"></i> <span> Feedback </span>
+                            <li class="{{ (request()->is('leave/request') || request()->is('resignation/request')) ? 'mm-active' : '' }}">
+                                <a href="javascript:void(0);" class="has-arrow waves-effect {{ (request()->is('leave/request') || request()->is('resignation/request')) ? 'mm active' : '' }}">
+                                    <i class="dripicons-backspace"></i> <span> Requests </span>
                                 </a>
+                                <ul class="submenu" aria-expanded="false">
+                                    <li>
+                                        <a href="{{ route('leave.request') }}" class="waves-effect {{ request()->is('leave/request') ? 'mm active' : '' }}">
+                                            <span>Request Leave</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="{{ route('resignation.request') }}" class="waves-effect {{ request()->is('resignation/request') ? 'mm active' : '' }}">
+                                            <span>Resignation Request</span>
+                                        </a>
+                                    </li>
+                                </ul>
                             </li>
                                 @endif
                             @endauth

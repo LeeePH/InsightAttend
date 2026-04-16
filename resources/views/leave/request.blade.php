@@ -37,6 +37,9 @@
         ],
         'otherTypeKey' => '8',
     ];
+
+    $holidayMap = (array) config('holidays.dates', []);
+    $holidayDates = array_keys($holidayMap);
 @endphp
 <div class="row leave-page">
     <div class="col-12 px-1">
@@ -130,9 +133,9 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="supporting_documents">Supporting documents or images <span class="text-muted font-weight-normal">(optional)</span></label>
+                            <label for="supporting_documents">Supporting documents or images <span class="text-muted font-weight-normal">(required for most leave types)</span></label>
                             <input type="file" class="form-control-file" id="supporting_documents" name="supporting_documents[]" accept=".pdf,.doc,.docx,image/*" multiple>
-                            <small class="text-muted d-block mt-1">Up to 5 files. Images or PDF/DOC up to 10&nbsp;MB each.</small>
+                            <small class="text-muted d-block mt-1">Up to 5 files. Images or PDF/DOC up to 10&nbsp;MB each. Sick Leave requires at least one image.</small>
                         </div>
 
                         <div class="form-group mb-0">
@@ -222,16 +225,14 @@
                                     <label for="department">Department</label>
                                     <select class="form-control" id="department" name="department" required>
                                         <option value="" selected>- Select Department -</option>
-                                        <option value="Admin">Admin</option>
-                                        <option value="Finance">Finance</option>
-                                        <option value="HR">HR</option>
-                                        <option value="Registrar">Registrar</option>
-                                        <option value="SIT">SIT</option>
-                                        <option value="SED">SED</option>
-                                        <option value="OEVP">OEVP</option>
-                                        <option value="Student Service">Student Service</option>
-                                        <option value="Academic">Academic</option>
-                                        <option value="SHTM">SHTM</option>
+                                        <option value="Bachelor of Science in Information Technology">Bachelor of Science in Information Technology</option>
+                                        <option value="Bachelor of Science in Hospitality Management">Bachelor of Science in Hospitality Management</option>
+                                        <option value="Bachelor of Science in Tourism Management">Bachelor of Science in Tourism Management</option>
+                                        <option value="Bachelor of Secondary Education - English">Bachelor of Secondary Education - English</option>
+                                        <option value="Bachelor of Secondary Education - Filipino">Bachelor of Secondary Education - Filipino</option>
+                                        <option value="Bachelor of Secondary Education - Mathematics">Bachelor of Secondary Education - Mathematics</option>
+                                        <option value="Bachelor of Secondary Education - Social Science">Bachelor of Secondary Education - Social Science</option>
+                                        <option value="Bachelor of Elementary Education">Bachelor of Elementary Education</option>
                                     </select>
                                 </div>
                             </div>
@@ -398,5 +399,54 @@
             if (departmentSelect) departmentSelect.value = selected.getAttribute('data-department') || '';
         });
     }
+
+    (function () {
+        var holidayMap = @json($holidayMap);
+        var holidayDates = @json($holidayDates);
+        var leaveDateInput = document.getElementById('leave_date');
+        var leaveDateEndInput = document.getElementById('leave_date_end');
+        var typeSelect = document.getElementById('type');
+        var docsInput = document.getElementById('supporting_documents');
+        var docsLabel = document.querySelector('label[for="supporting_documents"] span');
+
+        function isHoliday(ymd) {
+            return !!holidayMap[ymd];
+        }
+
+        function blockIfHoliday(inputEl) {
+            if (!inputEl || !inputEl.value) return false;
+            var ymd = inputEl.value;
+            if (isHoliday(ymd)) {
+                alert('Selected date is a holiday: ' + holidayMap[ymd] + '. You cannot file leave on this day.');
+                inputEl.value = '';
+                calculateDays();
+                return true;
+            }
+            return false;
+        }
+
+        if (leaveDateInput) {
+            leaveDateInput.addEventListener('change', function () {
+                blockIfHoliday(leaveDateInput);
+            });
+        }
+        if (leaveDateEndInput) {
+            leaveDateEndInput.addEventListener('change', function () {
+                blockIfHoliday(leaveDateEndInput);
+            });
+        }
+
+        // Toggle docs hint based on leave type (personal/vacation optional)
+        function refreshDocsRequirementHint() {
+            if (!typeSelect || !docsInput) return;
+            var t = String(typeSelect.value || '');
+            var optional = (t === '3' || t === '6'); // personal or vacation
+            docsInput.required = !optional;
+        }
+        if (typeSelect) {
+            typeSelect.addEventListener('change', refreshDocsRequirementHint);
+            refreshDocsRequirementHint();
+        }
+    })();
 </script>
 @endsection

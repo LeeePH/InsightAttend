@@ -18,11 +18,27 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="add_emp_name">Name</label>
-                                    <input type="text" class="form-control" placeholder="Enter Employee Name" id="add_emp_name" name="name"
-                                        required autocomplete="name" maxlength="64" />
-                                    <small class="form-text text-muted">At least 3 letters; letters, spaces, apostrophes, dots, and hyphens only.</small>
-                                    <div class="add-emp-err text-danger small mt-1" data-for="name" role="alert" style="display:none;"></div>
+                                    <label class="d-block mb-1">Name</label>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-2">
+                                            <input type="text" class="form-control" placeholder="Surname" id="add_emp_surname" name="surname" required autocomplete="family-name" maxlength="64" />
+                                            <div class="add-emp-err text-danger small mt-1" data-for="surname" role="alert" style="display:none;"></div>
+                                        </div>
+                                        <div class="col-md-6 mb-2">
+                                            <input type="text" class="form-control" placeholder="First Name" id="add_emp_first_name" name="first_name" required autocomplete="given-name" maxlength="64" />
+                                            <div class="add-emp-err text-danger small mt-1" data-for="first_name" role="alert" style="display:none;"></div>
+                                        </div>
+                                        <div class="col-md-6 mb-2">
+                                            <input type="text" class="form-control" placeholder="Middle Name (optional)" id="add_emp_middle_name" name="middle_name" autocomplete="additional-name" maxlength="64" />
+                                            <div class="add-emp-err text-danger small mt-1" data-for="middle_name" role="alert" style="display:none;"></div>
+                                        </div>
+                                        <div class="col-md-6 mb-2">
+                                            <input type="text" class="form-control" placeholder="Suffix (optional) e.g. Jr." id="add_emp_suffix" name="suffix" autocomplete="honorific-suffix" maxlength="16" />
+                                            <div class="add-emp-err text-danger small mt-1" data-for="suffix" role="alert" style="display:none;"></div>
+                                        </div>
+                                    </div>
+
+                                    <input type="hidden" id="add_emp_name" name="name" required />
                                 </div>
                                 <div class="form-group">
                                     <label for="add_emp_position">Position</label>
@@ -35,16 +51,14 @@
                                     <label for="add_emp_department">Department</label>
                                     <select class="form-control" id="add_emp_department" name="department" required>
                                         <option value="" selected>- Select Department -</option>
-                                        <option value="Admin">Admin</option>
-                                        <option value="Finance">Finance</option>
-                                        <option value="HR">HR</option>
-                                        <option value="Registrar">Registrar</option>
-                                        <option value="SIT">SIT</option>
-                                        <option value="SED">SED</option>
-                                        <option value="OEVP">OEVP</option>
-                                        <option value="Student Service">Student Service</option>
-                                        <option value="Academic">Academic</option>
-                                        <option value="SHTM">SHTM</option>
+                                        <option value="Bachelor of Science in Information Technology">Bachelor of Science in Information Technology</option>
+                                        <option value="Bachelor of Science in Hospitality Management">Bachelor of Science in Hospitality Management</option>
+                                        <option value="Bachelor of Science in Tourism Management">Bachelor of Science in Tourism Management</option>
+                                        <option value="Bachelor of Secondary Education - English">Bachelor of Secondary Education - English</option>
+                                        <option value="Bachelor of Secondary Education - Filipino">Bachelor of Secondary Education - Filipino</option>
+                                        <option value="Bachelor of Secondary Education - Mathematics">Bachelor of Secondary Education - Mathematics</option>
+                                        <option value="Bachelor of Secondary Education - Social Science">Bachelor of Secondary Education - Social Science</option>
+                                        <option value="Bachelor of Elementary Education">Bachelor of Elementary Education</option>
                                     </select>
                                     <div class="add-emp-err text-danger small mt-1" data-for="department" role="alert" style="display:none;"></div>
                                 </div>
@@ -75,8 +89,8 @@
                                     <select class="form-control" id="add_emp_schedule" name="schedule" required>
                                         <option value="" selected>- Select -</option>
                                         @foreach($schedules as $schedule)
-                                        <option value="{{$schedule->slug}}">{{$schedule->slug}} -> from {{$schedule->time_in}}
-                                            to {{$schedule->time_out}} </option>
+                                        <option value="{{$schedule->slug}}">{{$schedule->slug}} -> from {{ \Carbon\Carbon::parse($schedule->time_in)->format('g:i A') }}
+                                            to {{ \Carbon\Carbon::parse($schedule->time_out)->format('g:i A') }} </option>
                                         @endforeach
 
                                     </select>

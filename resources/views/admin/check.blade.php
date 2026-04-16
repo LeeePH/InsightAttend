@@ -154,96 +154,70 @@
         }
     @endphp
 
-    <form action="{{ route('check_store') }}" method="post">
-        @csrf
-        <div class="card attendance-sheet-card border shadow-sm">
-            <div class="card-body pb-2">
-                <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
-                    <div>
-                        <h4 class="card-title mb-1">Monthly attendance</h4>
-                        <p class="text-muted mb-0 small">
-                            Mark <strong>Present</strong> or <strong>Leave</strong> per day for each employee, then save.
-                            <span class="d-none d-md-inline">Scroll horizontally to see all days.</span>
-                        </p>
-                    </div>
-                    <button type="submit" class="btn btn-success mt-2 mt-md-0">
-                        <i class="mdi mdi-content-save-outline mr-1"></i> Save sheet
-                    </button>
+    <div class="card attendance-sheet-card border shadow-sm">
+        <div class="card-body pb-2">
+            <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+                <div>
+                    <h4 class="card-title mb-1">Monthly attendance</h4>
+                    <p class="text-muted mb-0 small">
+                        Automatically recorded from employee Time In/Time Out and approved leave requests.
+                        <span class="d-none d-md-inline">Scroll horizontally to see all days.</span>
+                    </p>
                 </div>
-                <div class="attendance-sheet-legend mb-3">
-                    <span><span class="badge-dot" style="background:#0acf97;"></span> Present</span>
-                    <span><span class="badge-dot" style="background:#f9bc0b;"></span> Leave</span>
-                    <span class="text-muted">{{ $today->format('F Y') }}</span>
-                </div>
+            </div>
+            <div class="attendance-sheet-legend mb-3">
+                <span><span class="badge-dot" style="background:#0acf97;"></span> Present</span>
+                <span><span class="badge-dot" style="background:#f9bc0b;"></span> Leave (Approved)</span>
+                <span class="text-muted">{{ $today->format('F Y') }}</span>
+            </div>
 
-                <div class="attendance-sheet-scroll">
-                    <table class="table table-sm table-bordered attendance-sheet-table">
-                        <thead>
+            <div class="attendance-sheet-scroll">
+                <table class="table table-sm table-bordered attendance-sheet-table">
+                    <thead>
+                        <tr>
+                            <th class="col-employee">Employee</th>
+                            <th class="col-meta">Position</th>
+                            @foreach ($dates as $d)
+                                <th class="col-day {{ $d->isWeekend() ? 'weekend' : '' }}" title="{{ $d->format('l, M j, Y') }}">
+                                    <span class="day-num">{{ $d->day }}</span>
+                                    {{ $d->format('D') }}
+                                </th>
+                            @endforeach
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($employeesByDept as $dept => $deptEmployees)
                             <tr>
-                                <th class="col-employee">Employee</th>
-                                <th class="col-meta">Role</th>
-                                <th class="col-meta">ID</th>
-                                @foreach ($dates as $d)
-                                    @php $ymd = $d->format('Y-m-d'); @endphp
-                                    <th class="col-day {{ $d->isWeekend() ? 'weekend' : '' }}" title="{{ $d->format('l, M j, Y') }}">
-                                        <span class="day-num">{{ $d->day }}</span>
-                                        {{ $d->format('D') }}
-                                    </th>
-                                @endforeach
+                                <td class="col-employee" colspan="{{ 2 + count($dates) }}" style="background:#f1f3f5; font-weight:600;">
+                                    {{ $dept }}
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($employees as $employee)
-                                <input type="hidden" name="emp_id" value="{{ $employee->id }}">
+                            @foreach ($deptEmployees as $employee)
                                 <tr>
                                     <td class="col-employee">{{ $employee->name }}</td>
                                     <td class="col-meta text-muted">{{ $employee->position ?? '—' }}</td>
-                                    <td class="col-meta"><small class="text-muted">{{ $employee->id }}</small></td>
                                     @foreach ($dates as $d)
                                         @php
-                                            $date_picker = $d->format('Y-m-d');
-                                            $check_attd = \App\Models\Attendance::query()
-                                                ->where('emp_id', $employee->id)
-                                                ->where('attendance_date', $date_picker)
-                                                ->first();
-                                            $check_leave = \App\Models\Leave::query()
-                                                ->where('emp_id', $employee->id)
-                                                ->where('leave_date', $date_picker)
-                                                ->first();
+                                            $ymd = $d->format('Y-m-d');
+                                            $isLeave = !empty($leaveByEmp[$employee->id][$ymd]);
+                                            $isPresent = !empty($attendanceByEmp[$employee->id][$ymd]);
                                         @endphp
                                         <td class="col-day-cell {{ $d->isWeekend() ? 'weekend' : '' }}">
-                                            <div class="sheet-cell-checks">
-                                                <div class="custom-control custom-checkbox">
-                                                    <input
-                                                        class="custom-control-input"
-                                                        name="attd[{{ $date_picker }}][{{ $employee->id }}]"
-                                                        type="checkbox"
-                                                        id="attd-{{ $employee->id }}-{{ $date_picker }}"
-                                                        value="1"
-                                                        @if (isset($check_attd)) checked @endif
-                                                    >
-                                                    <label class="custom-control-label" for="attd-{{ $employee->id }}-{{ $date_picker }}">P</label>
-                                                </div>
-                                                <div class="custom-control custom-checkbox">
-                                                    <input
-                                                        class="custom-control-input"
-                                                        name="leave[{{ $date_picker }}][{{ $employee->id }}]"
-                                                        type="checkbox"
-                                                        id="leave-{{ $employee->id }}-{{ $date_picker }}"
-                                                        value="1"
-                                                        @if (isset($check_leave)) checked @endif
-                                                    >
-                                                    <label class="custom-control-label" for="leave-{{ $employee->id }}-{{ $date_picker }}">L</label>
-                                                </div>
-                                            </div>
+                                            @if ($isLeave)
+                                                <span class="badge badge-warning">L</span>
+                                            @elseif ($isPresent)
+                                                <span class="badge badge-success">P</span>
+                                            @else
+                                                <span class="text-muted">—</span>
+                                            @endif
                                         </td>
                                     @endforeach
                                 </tr>
                             @endforeach
-                        </tbody>
-                    </table>
-                </div>
+                        @endforeach
+                    </tbody>
+                </table>
             </div>
         </div>
-    </form>
+    </div>
 @endsection

@@ -39,36 +39,78 @@
                             <div class="col-12">
                                 <div class="card">
                                     <div class="card-body">
+                                                @php
+                                                    $deptLabelMap = [
+                                                        // Backward-compat for older stored codes
+                                                        'SIT' => 'Bachelor of Science in Information Technology',
+                                                        'SHTM' => 'Bachelor of Science in Hospitality Management',
+                                                        'SED' => 'Bachelor of Secondary Education',
+                                                    ];
+
+                                                    $deptToLabel = function ($raw) use ($deptLabelMap) {
+                                                        $raw = trim((string) ($raw ?? ''));
+                                                        if ($raw === '') return '';
+                                                        return $deptLabelMap[$raw] ?? $raw;
+                                                    };
+
+                                                    $deptOptions = [];
+                                                    foreach ($employees as $emp) {
+                                                        $deptOpt = $deptToLabel($emp->department ?? null);
+                                                        if ($deptOpt !== '') {
+                                                            $deptOptions[$deptOpt] = true;
+                                                        }
+                                                    }
+                                                    $deptOptions = array_keys($deptOptions);
+                                                    sort($deptOptions, SORT_NATURAL | SORT_FLAG_CASE);
+                                                @endphp
+
+                                                <div class="row mb-3">
+                                                    <div class="col-md-4">
+                                                        <label for="employeeDepartmentFilter" class="mb-1">Filter by Department</label>
+                                                        <select id="employeeDepartmentFilter" class="form-control">
+                                                            <option value="" selected>All Departments</option>
+                                                            @foreach ($deptOptions as $deptOpt)
+                                                                <option value="{{ $deptOpt }}">{{ $deptOpt }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+                                                </div>
+
                                                 <table id="datatable-buttons" class="table table-striped table-bordered dt-responsive nowrap" style="border-collapse: collapse; border-spacing: 0; width: 100%;">
                                         
                                                     <thead>
                                                     <tr>
-                                                        <th data-priority="1">Employee ID</th>
-                                                        <th data-priority="2">Name</th>
-                                                        <th data-priority="3">Position</th>
-                                                        <th data-priority="4">Department</th>
-                                                        <th data-priority="5">Email</th>
-                                                        <th data-priority="5">Schedule</th>
-                                                        <th data-priority="6">Member Since</th>
-                                                        <th data-priority="7">Actions</th>
-                                                     
+                                                        <th data-priority="1">Name</th>
+                                                        <th data-priority="2">Position</th>
+                                                        <th data-priority="3">Department</th>
+                                                        <th data-priority="4">Email</th>
+                                                        <th data-priority="4">Schedule</th>
+                                                        <th data-priority="5">Member Since</th>
+                                                        <th data-priority="6">Actions</th>
+                                                      
                                                     </tr>
                                                     </thead>
                                                     <tbody>
                                                         @foreach( $employees as $employee)
 
                                                         <tr>
-                                                            <td>{{$employee->id}}</td>
                                                             <td>{{$employee->name}}</td>
                                                             <td>{{$employee->position}}</td>
-                                                            <td>{{$employee->department ?? 'N/A'}}</td>
+                                                            <td>
+                                                                @php
+                                                                    $dept = $deptToLabel($employee->department ?? null) ?: null;
+                                                                @endphp
+                                                                {{ $dept ?: 'N/A' }}
+                                                            </td>
                                                             <td>{{$employee->email}}</td>
                                                             <td>
                                                                 @if(isset($employee->schedules->first()->slug))
                                                                 {{$employee->schedules->first()->slug}}
                                                                 @endif
                                                             </td>
-                                                            <td>{{$employee->created_at}}</td>
+                                                            <td title="{{ $employee->created_at }}">
+                                                                {{ \Carbon\Carbon::parse($employee->created_at)->format('M d, Y h:i A') }}
+                                                            </td>
                                                             <td>
                         
                                                                 <a href="#edit-employee-{{ $employee->id }}" data-toggle="modal" class="btn btn-success btn-sm edit btn-flat"><i class='fa fa-edit'></i> Edit</a>
@@ -100,6 +142,55 @@
 <!-- Face API JS -->
 <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 <script>
+    (function () {
+        function escapeRegex(str) {
+            return (str || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        function getDeptCellText(rowEl) {
+            if (!rowEl || !rowEl.cells || rowEl.cells.length < 3) return '';
+            return (rowEl.cells[2].textContent || '').trim();
+        }
+
+        function applyDepartmentFilter(value) {
+            var tableEl = document.getElementById('datatable-buttons');
+            if (!tableEl) return;
+
+            // Prefer DataTables column search if available
+            if (window.jQuery && jQuery.fn && jQuery.fn.dataTable && jQuery.fn.dataTable.isDataTable) {
+                try {
+                    if (jQuery.fn.dataTable.isDataTable('#datatable-buttons')) {
+                        var dt = jQuery('#datatable-buttons').DataTable();
+                        if (!value) {
+                            dt.column(2).search('', true, false).draw();
+                        } else {
+                            dt.column(2).search('^' + escapeRegex(value) + '$', true, false).draw();
+                        }
+                        return;
+                    }
+                } catch (e) {
+                    // fall through to non-DataTables filtering
+                }
+            }
+
+            // Fallback: simple row show/hide
+            var tbody = tableEl.tBodies && tableEl.tBodies[0];
+            if (!tbody) return;
+            Array.prototype.forEach.call(tbody.rows, function (tr) {
+                var deptText = getDeptCellText(tr);
+                tr.style.display = (!value || deptText === value) ? '' : 'none';
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            var sel = document.getElementById('employeeDepartmentFilter');
+            if (!sel) return;
+            sel.addEventListener('change', function () {
+                applyDepartmentFilter(sel.value);
+            });
+        });
+    })();
+
     let video = document.getElementById('video');
     let canvas = document.getElementById('canvas');
     let startCameraBtn = document.getElementById('startCamera');
@@ -116,7 +207,8 @@
         const employeeForm = document.getElementById('employeeForm');
         if (!employeeForm) return;
 
-        const NAME_RE = /^[A-Za-z][A-Za-z\s.'-]*$/;
+        const NAME_PART_RE = /^[A-Za-z][A-Za-z\s.'-]*$/;
+        const SUFFIX_RE = /^[A-Za-z0-9][A-Za-z0-9.\s'-]*$/;
         const POSITION_RE = /^[A-Za-z0-9][A-Za-z0-9\s.\-/&]*$/;
         const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         const PASS_MIN = 8;
@@ -150,16 +242,73 @@
             return addEmpSubmitAttempted || !!addEmpTouched[key];
         }
 
+        function buildEmployeeFullName() {
+            const surname = (addEmpField('surname') ? addEmpField('surname').value : '').trim();
+            const first = (addEmpField('first_name') ? addEmpField('first_name').value : '').trim();
+            const middle = (addEmpField('middle_name') ? addEmpField('middle_name').value : '').trim();
+            const suffix = (addEmpField('suffix') ? addEmpField('suffix').value : '').trim();
+
+            if (!surname && !first && !middle && !suffix) return '';
+
+            let right = first;
+            if (middle) right += (right ? ' ' : '') + middle;
+            if (suffix) right += (right ? ' ' : '') + suffix;
+
+            if (surname && right) return surname + ', ' + right;
+            if (surname) return surname;
+            return right;
+        }
+
+        function syncEmployeeFullName() {
+            const nameEl = addEmpField('name');
+            if (!nameEl) return;
+            nameEl.value = buildEmployeeFullName();
+        }
+
+        function validateAddEmpSurname(value) {
+            const t = (value || '').trim();
+            if (t.length === 0) {
+                return addEmpShowRequired('surname') ? 'Surname is required.' : '';
+            }
+            if (t.length < 2) return 'Surname must be at least 2 characters.';
+            if (t.length > 64) return 'Surname must not exceed 64 characters.';
+            if (!NAME_PART_RE.test(t)) return 'Surname contains invalid characters.';
+            return '';
+        }
+
+        function validateAddEmpFirstName(value) {
+            const t = (value || '').trim();
+            if (t.length === 0) {
+                return addEmpShowRequired('first_name') ? 'First Name is required.' : '';
+            }
+            if (t.length < 2) return 'First Name must be at least 2 characters.';
+            if (t.length > 64) return 'First Name must not exceed 64 characters.';
+            if (!NAME_PART_RE.test(t)) return 'First Name contains invalid characters.';
+            return '';
+        }
+
+        function validateAddEmpMiddleName(value) {
+            const t = (value || '').trim();
+            if (t.length === 0) return '';
+            if (t.length > 64) return 'Middle Name must not exceed 64 characters.';
+            if (!NAME_PART_RE.test(t)) return 'Middle Name contains invalid characters.';
+            return '';
+        }
+
+        function validateAddEmpSuffix(value) {
+            const t = (value || '').trim();
+            if (t.length === 0) return '';
+            if (t.length > 16) return 'Suffix must not exceed 16 characters.';
+            if (!SUFFIX_RE.test(t)) return 'Suffix contains invalid characters.';
+            return '';
+        }
+
         function validateAddEmpName(value) {
             const t = (value || '').trim();
             if (t.length === 0) {
                 return addEmpShowRequired('name') ? 'Name is required.' : '';
             }
-            if (t.length < 3) return 'Name must be at least 3 characters.';
-            if (t.length > 64) return 'Name must not exceed 64 characters.';
-            if (!NAME_RE.test(t)) {
-                return 'Name may contain letters, spaces, apostrophes, dots, and hyphens only (must start with a letter).';
-            }
+            if (t.length > 128) return 'Name is too long.';
             return '';
         }
 
@@ -212,6 +361,11 @@
         }
 
         function refreshAddEmployeeValidation() {
+            syncEmployeeFullName();
+            const surnameEl = addEmpField('surname');
+            const firstEl = addEmpField('first_name');
+            const middleEl = addEmpField('middle_name');
+            const suffixEl = addEmpField('suffix');
             const nameEl = addEmpField('name');
             const posEl = addEmpField('position');
             const depEl = addEmpField('department');
@@ -219,7 +373,10 @@
             const passEl = addEmpField('password');
             const schEl = addEmpField('schedule');
 
-            addEmpSetError('name', nameEl ? validateAddEmpName(nameEl.value) : '');
+            addEmpSetError('surname', surnameEl ? validateAddEmpSurname(surnameEl.value) : '');
+            addEmpSetError('first_name', firstEl ? validateAddEmpFirstName(firstEl.value) : '');
+            addEmpSetError('middle_name', middleEl ? validateAddEmpMiddleName(middleEl.value) : '');
+            addEmpSetError('suffix', suffixEl ? validateAddEmpSuffix(suffixEl.value) : '');
             addEmpSetError('position', posEl ? validateAddEmpPosition(posEl.value) : '');
             addEmpSetError('department', depEl ? validateAddEmpDepartment(depEl.value) : '');
             addEmpSetError('password', passEl ? validateAddEmpPassword(passEl.value) : '');
@@ -256,7 +413,7 @@
             });
         };
 
-        ['name', 'position', 'email', 'password'].forEach(function (fieldName) {
+        ['surname', 'first_name', 'middle_name', 'suffix', 'position', 'email', 'password'].forEach(function (fieldName) {
             const el = addEmpField(fieldName);
             if (!el) return;
             el.addEventListener('blur', function () {

@@ -12,6 +12,10 @@ Route::get('/', function () {
 // Employee dashboard route
 Route::get('/employee/dashboard', '\App\Http\Controllers\HomeController@employeeDashboard')->name('employee.dashboard')->middleware('auth');
 Route::post('/employee/password', '\App\Http\Controllers\HomeController@updatePassword')->name('employee.password.update')->middleware('auth');
+Route::get('/employee/attendance-logs', '\App\Http\Controllers\HomeController@employeeAttendanceLogs')->name('employee.attendance_logs')->middleware('auth');
+Route::get('/employee/settings', '\App\Http\Controllers\HomeController@employeeSettings')->name('employee.settings')->middleware('auth');
+Route::post('/employee/settings/profile', '\App\Http\Controllers\HomeController@updateEmployeeProfile')->name('employee.settings.profile')->middleware('auth');
+Route::post('/employee/settings/password', '\App\Http\Controllers\HomeController@updatePassword')->name('employee.settings.password')->middleware('auth');
 
 // Time In routes (public)
 Route::get('/timein', '\App\Http\Controllers\TimeInController@index')->name('timein.index');
@@ -31,11 +35,7 @@ Route::post('/leave/request', '\App\Http\Controllers\LeaveController@storeReques
 Route::get('/resignation/request', '\App\Http\Controllers\ResignationController@requestForm')->name('resignation.request')->middleware('auth');
 Route::post('/resignation/request', '\App\Http\Controllers\ResignationController@storeRequest')->name('resignation.storeRequest')->middleware('auth');
 
-// Feedback routes (employee)
-Route::get('/employee/feedback', '\App\Http\Controllers\FeedbackController@index')->name('employee.feedback')->middleware('auth');
-Route::post('/employee/feedback', '\App\Http\Controllers\FeedbackController@store')->name('employee.feedback.store')->middleware('auth');
-
-// Feedback routes (admin)
+// Feedback routes removed (feature disabled)
 
 // Leave approval letter route
 Route::get('/leave/approval-letter/{id}', '\App\Http\Controllers\LeaveController@generateApprovalLetter')->name('leave.approvalLetter');
@@ -61,10 +61,7 @@ Route::group(['middleware' => ['auth', 'Role'], 'roles' => ['admin']], function 
     Route::get('/resignation/approval-letter/{id}', '\App\Http\Controllers\ResignationController@generateApprovalLetter')->name('resignation.approvalLetter');
     Route::get('/overtime', '\App\Http\Controllers\LeaveController@indexOvertime')->name('indexOvertime');
 
-    // Feedback (admin)
-    Route::get('/admin/feedback', '\App\Http\Controllers\FeedbackController@adminIndex')->name('admin.feedback');
-    Route::get('/admin/feedback/{id}/read', '\App\Http\Controllers\FeedbackController@markRead')->name('admin.feedback.read');
-    Route::get('/admin/feedback/{id}/resolve', '\App\Http\Controllers\FeedbackController@markResolved')->name('admin.feedback.resolve');
+    // Feedback routes removed (feature disabled)
     Route::get('/admin/backups', '\App\Http\Controllers\BackupController@index')->name('admin.backups');
     Route::post('/admin/backups/create', '\App\Http\Controllers\BackupController@create')->name('admin.backups.create');
     Route::get('/admin/backups/{backup}/download', '\App\Http\Controllers\BackupController@download')->name('admin.backups.download');

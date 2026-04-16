@@ -615,30 +615,61 @@ dt {
   list-style: none;
 }
 
+.submenu {
+  margin-left: 38px;
+  border-left: 2px solid #444660;
+  background-color: rgba(0, 0, 0, 0.12);
+}
+
 .submenu li a {
-  padding: 8px 20px 8px 10px;
+  padding: 8px 20px 8px 16px;
   color: #8699ad;
-  display: block;
-  -webkit-transition: all 0.5s;
-  transition: all 0.5s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  -webkit-transition: all 0.3s;
+  transition: all 0.3s;
+  position: relative;
+}
+
+.submenu li a::before {
+  content: '';
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: #4a5568;
+  flex-shrink: 0;
+  -webkit-transition: background-color 0.3s;
+  transition: background-color 0.3s;
 }
 
 .submenu li a:focus {
-  background-color: left-bar;
+  outline: none;
 }
 
 .submenu li a:hover {
-  background-color: #333547;
-  color: rgba(255, 255, 255, 0.8);
+  background-color: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.85);
+  padding-left: 20px;
+}
+
+.submenu li a:hover::before {
+  background-color: #626ed4;
 }
 
 .submenu > li > a {
-  padding-left: 50px;
+  padding-left: 16px;
 }
 
 .submenu li.mm-active > a {
   color: #b4c9de;
-  background-color: #333547;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.submenu li.mm-active > a::before {
+  background-color: #626ed4;
 }
 
 .topbar {

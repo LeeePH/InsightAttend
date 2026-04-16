@@ -104,6 +104,39 @@ use Illuminate\Support\Str;
     .schedule-item strong {
         color: var(--theme-text);
     }
+
+    .profile-card {
+        border: 1px solid var(--theme-border);
+        border-radius: 12px;
+        background: var(--theme-card);
+    }
+    .profile-card .profile-title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        margin-bottom: 0.75rem;
+        color: var(--theme-text);
+    }
+    .profile-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px 18px;
+    }
+    @media (max-width: 575.98px) {
+        .profile-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+    .profile-field .label {
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--theme-muted);
+        margin-bottom: 2px;
+    }
+    .profile-field .value {
+        font-weight: 600;
+        color: var(--theme-text);
+    }
 </style>
 @endsection
 
@@ -125,65 +158,80 @@ use Illuminate\Support\Str;
             <div class="card-body">
                 <h4 class="mt-0 header-title mb-4">Welcome, {{ $employee->name ?? 'Employee' }}!</h4>
                 
-                <div class="row">
-                    <div class="col-md-4">
-                        <div class="card summary-card">
+                <div class="row mt-2">
+                    <div class="col-lg-6 mb-3">
+                        <div class="card profile-card">
                             <div class="card-body">
-                                <p class="summary-label">Employee ID</p>
-                                <h3 class="summary-value">{{ $employee->id }}</h3>
+                                <div class="profile-title">My profile</div>
+                                <div class="profile-grid">
+                                    <div class="profile-field">
+                                        <div class="label">Department</div>
+                                        <div class="value">{{ $employee->department ?? '—' }}</div>
+                                    </div>
+                                    <div class="profile-field">
+                                        <div class="label">Position</div>
+                                        <div class="value">{{ $employee->position ?? '—' }}</div>
+                                    </div>
+                                    <div class="profile-field">
+                                        <div class="label">Schedule</div>
+                                        <div class="value">
+                                            @if ($sched)
+                                                {{ \Carbon\Carbon::parse($sched->time_in)->format('h:i A') }}
+                                                – {{ \Carbon\Carbon::parse($sched->time_out)->format('h:i A') }}
+                                            @else
+                                                —
+                                            @endif
+                                        </div>
+                                    </div>
+                                    <div class="profile-field">
+                                        <div class="label">Subject</div>
+                                        <div class="value">{{ $sched?->slug ?? '—' }}</div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <div class="card summary-card">
+                    <div class="col-lg-6 mb-3">
+                        <div class="card profile-card">
                             <div class="card-body">
-                                <p class="summary-label">Department</p>
-                                <h3 class="summary-value">{{ $employee->department ?? 'N/A' }}</h3>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card summary-card">
-                            <div class="card-body">
-                                <p class="summary-label">Position</p>
-                                <h3 class="summary-value">{{ $employee->position ?? 'N/A' }}</h3>
+                                <div class="profile-title">Today's attendance</div>
+                                <p class="mb-2">
+                                    <strong>Status:</strong>
+                                    @if ($statusLabel === 'Present')
+                                        <span class="badge badge-success">Present</span>
+                                    @elseif ($statusLabel === 'Late')
+                                        <span class="badge badge-warning">Late</span>
+                                    @else
+                                        <span class="badge badge-secondary">Absent</span>
+                                    @endif
+                                </p>
+                                <div class="row">
+                                    <div class="col-sm-4">
+                                        <div class="text-muted small">Time In</div>
+                                        <div class="font-weight-600">{{ $timeIn ? $timeIn->format('h:i A') : '—' }}</div>
+                                    </div>
+                                    <div class="col-sm-4">
+                                        <div class="text-muted small">Time Out</div>
+                                        <div class="font-weight-600">{{ $timeOut ? $timeOut->format('h:i A') : '—' }}</div>
+                                    </div>
+                                    <div class="col-sm-4">
+                                        <div class="text-muted small">Hours worked</div>
+                                        <div class="font-weight-600">
+                                            @if (!is_null($workedSeconds))
+                                                {{ gmdate('H:i', (int) $workedSeconds) }}
+                                            @else
+                                                —
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                
-                <div class="row mt-4">
-                    <div class="col-lg-5 mb-4 mb-lg-0">
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title">Change your password</h5>
-                                <p class="text-muted small">Use at least 8 characters. You will stay signed in after updating.</p>
-                                <form method="POST" action="{{ route('employee.password.update') }}" autocomplete="off">
-                                    @csrf
-                                    <div class="form-group">
-                                        <label for="current_password">Current password</label>
-                                        <input type="password" name="current_password" id="current_password" class="form-control @error('current_password') is-invalid @enderror" required autocomplete="current-password">
-                                        @error('current_password')
-                                            <div class="invalid-feedback d-block">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="password">New password</label>
-                                        <input type="password" name="password" id="password" class="form-control @error('password') is-invalid @enderror" required minlength="8" autocomplete="new-password">
-                                        @error('password')
-                                            <div class="invalid-feedback d-block">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="password_confirmation">Confirm new password</label>
-                                        <input type="password" name="password_confirmation" id="password_confirmation" class="form-control" required minlength="8" autocomplete="new-password">
-                                    </div>
-                                    <button type="submit" class="btn btn-primary btn-sm">Update password</button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-7">
+
+                <div class="row mt-2">
+                    <div class="col-lg-12">
                         <div class="card">
                             <div class="card-body">
                                 <h5 class="card-title">Quick actions</h5>
@@ -194,30 +242,7 @@ use Illuminate\Support\Str;
                                     <a href="{{ route('timeout.index') }}" class="theme-btn mb-2">
                                         <i class="fa fa-clock-o"></i> Time Out
                                     </a>
-                                    <a href="{{ route('leave.request') }}" class="theme-btn mb-2">
-                                        <i class="fa fa-calendar"></i> Request Leave
-                                    </a>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row mt-2">
-                    <div class="col-md-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title">My schedule</h5>
-                                @php
-                                    $sched = $employee ? $employee->schedules()->first() : null;
-                                @endphp
-                                @if ($sched)
-                                    <p class="schedule-item"><strong>Shift:</strong> {{ $sched->slug }}</p>
-                                    <p class="schedule-item"><strong>Time in:</strong> {{ \Carbon\Carbon::parse($sched->time_in)->format('h:i A') }}</p>
-                                    <p class="schedule-item"><strong>Time out:</strong> {{ \Carbon\Carbon::parse($sched->time_out)->format('h:i A') }}</p>
-                                @else
-                                    <p class="text-muted">No schedule assigned</p>
-                                @endif
                             </div>
                         </div>
                     </div>

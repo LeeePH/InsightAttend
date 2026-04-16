@@ -56,8 +56,13 @@
                                             <td>{{ $overtime->emp_id }}</td>
                                             <td>{{ $overtime->employee->name }}</td>
                                             <td>{{ $overtime->duration }} </td>
-                                            <td>{{ $overtime->employee->schedules->first()->time_in }} </td>
-                                            <td>{{ $overtime->employee->schedules->first()->time_out }}</td>
+                                            <td>
+                                                @php $sched = $overtime->employee->schedules->first(); @endphp
+                                                {{ $sched?->time_in ? \Carbon\Carbon::parse($sched->time_in)->format('g:i A') : '—' }}
+                                            </td>
+                                            <td>
+                                                {{ $sched?->time_out ? \Carbon\Carbon::parse($sched->time_out)->format('g:i A') : '—' }}
+                                            </td>
                                         </tr>
 
                                     @endforeach

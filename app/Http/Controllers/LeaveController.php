@@ -14,6 +14,7 @@ use App\Http\Requests\AttendanceEmp;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class LeaveController extends Controller
 {
@@ -128,30 +129,82 @@ class LeaveController extends Controller
             $rules['type'] = 'required|integer|in:' . implode(',', $ids);
         }
 
-        $request->validate($rules);
+        $validated = $request->validate($rules);
+
+        // Enforce: max 3 leave requests per employee per month (by leave start date)
+        $start = Carbon::parse($validated['leave_date'])->startOfMonth()->toDateString();
+        $end = Carbon::parse($validated['leave_date'])->endOfMonth()->toDateString();
+        $monthlyCount = Leave::query()
+            ->where('emp_id', $validated['emp_id'])
+            ->whereBetween('leave_date', [$start, $end])
+            ->count();
+        if ($monthlyCount >= 3) {
+            return back()->withErrors(['leave_date' => 'You have reached the maximum of 3 leave requests for this month.'])->withInput();
+        }
+
+        // Holidays: block filing on holiday dates (any date in selected range)
+        $holidayDates = array_keys((array) config('holidays.dates', []));
+        $from = Carbon::parse($validated['leave_date']);
+        $to = Carbon::parse($validated['leave_date_end']);
+        if ($to->lessThan($from)) {
+            [$from, $to] = [$to, $from];
+        }
+        for ($d = $from->copy(); $d->lte($to); $d->addDay()) {
+            if (in_array($d->toDateString(), $holidayDates, true)) {
+                return back()->withErrors(['leave_date' => 'You cannot file a leave request on a holiday (' . $d->toDateString() . ').'])->withInput();
+            }
+        }
+
+        // Supporting docs rules:
+        // - Required for Sick + other leave types except Personal and Vacation (optional)
+        // - Sick leave requires at least one image file
+        $type = (int) $validated['type'];
+        $docs = $request->file('supporting_documents', []);
+        $docsCount = is_array($docs) ? count(array_filter($docs)) : 0;
+        $docsRequiredTypes = [1, 2, 4, 5, 7, 8]; // sick, annual, maternity, paternity, emergency, others
+        $docsOptionalTypes = [3, 6]; // personal, vacation
+
+        if (in_array($type, $docsRequiredTypes, true) && $docsCount === 0) {
+            return back()->withErrors(['supporting_documents' => 'Supporting documentation is required for this leave type.'])->withInput();
+        }
+        if ($type === 1 && $docsCount > 0) {
+            $hasImage = false;
+            foreach ($docs as $f) {
+                if ($f && $f->isValid()) {
+                    $mime = (string) $f->getMimeType();
+                    if (str_starts_with($mime, 'image/')) {
+                        $hasImage = true;
+                        break;
+                    }
+                }
+            }
+            if (!$hasImage) {
+                return back()->withErrors(['supporting_documents' => 'Sick Leave requires at least one supporting image.'])->withInput();
+            }
+        }
         
         $leave = new Leave();
-        $leave->emp_id = $request->emp_id;
-        $leave->leave_date = $request->leave_date;
-        $leave->leave_date_end = $request->leave_date_end;
+        $leave->emp_id = $validated['emp_id'];
+        $leave->leave_date = $validated['leave_date'];
+        $leave->leave_date_end = $validated['leave_date_end'];
         
         // Calculate number of leave days
-        $startDate = new DateTime($request->leave_date);
-        $endDate = new DateTime($request->leave_date_end);
+        $startDate = new DateTime($validated['leave_date']);
+        $endDate = new DateTime($validated['leave_date_end']);
         $leaveDays = $endDate->diff($startDate)->days + 1;
         $leave->leave_days = $leaveDays;
         
         $leave->leave_time = date('H:i:s');
-        $leave->type = $request->type;
-        $leave->reason = $request->reason;
+        $leave->type = $validated['type'];
+        $leave->reason = $validated['reason'];
         $leave->status = Leave::STATUS_PENDING;
         
         // If "Others" is selected, append the specification
         $leaveTypeOptions = $this->employeeRequestFormService->selectOptions($template, 'type', []);
         $otherTypeKey = $this->findOtherOptionKey($leaveTypeOptions, '8');
 
-        if ((string) $request->type === (string) $otherTypeKey && $request->other_type) {
-            $leave->reason = $request->reason . ' [Other: ' . $request->other_type . ']';
+        if ((string) $validated['type'] === (string) $otherTypeKey && $request->other_type) {
+            $leave->reason = $validated['reason'] . ' [Other: ' . $request->other_type . ']';
         }
 
         $leave->save();

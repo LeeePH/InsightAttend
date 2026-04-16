@@ -34,16 +34,14 @@
 
                         <select class="form-control" id="edit-department-{{ $employee->id }}" name="department" required>
                             <option value="" selected>- Select Department -</option>
-                            <option value="Admin" {{ $employee->department == 'Admin' ? 'selected' : '' }}>Admin</option>
-                            <option value="Finance" {{ $employee->department == 'Finance' ? 'selected' : '' }}>Finance</option>
-                            <option value="HR" {{ $employee->department == 'HR' ? 'selected' : '' }}>HR</option>
-                            <option value="Registrar" {{ $employee->department == 'Registrar' ? 'selected' : '' }}>Registrar</option>
-                            <option value="SIT" {{ $employee->department == 'SIT' ? 'selected' : '' }}>SIT</option>
-                            <option value="SED" {{ $employee->department == 'SED' ? 'selected' : '' }}>SED</option>
-                            <option value="OEVP" {{ $employee->department == 'OEVP' ? 'selected' : '' }}>OEVP</option>
-                            <option value="Student Service" {{ $employee->department == 'Student Service' ? 'selected' : '' }}>Student Service</option>
-                            <option value="Academic" {{ $employee->department == 'Academic' ? 'selected' : '' }}>Academic</option>
-                            <option value="SHTM" {{ $employee->department == 'SHTM' ? 'selected' : '' }}>SHTM</option>
+                            <option value="Bachelor of Science in Information Technology" @selected(in_array($employee->department, ['Bachelor of Science in Information Technology', 'SIT'], true))>Bachelor of Science in Information Technology</option>
+                            <option value="Bachelor of Science in Hospitality Management" @selected(in_array($employee->department, ['Bachelor of Science in Hospitality Management', 'SHTM'], true))>Bachelor of Science in Hospitality Management</option>
+                            <option value="Bachelor of Science in Tourism Management" @selected($employee->department === 'Bachelor of Science in Tourism Management')>Bachelor of Science in Tourism Management</option>
+                            <option value="Bachelor of Secondary Education - English" @selected(in_array($employee->department, ['Bachelor of Secondary Education - English'], true))>Bachelor of Secondary Education - English</option>
+                            <option value="Bachelor of Secondary Education - Filipino" @selected(in_array($employee->department, ['Bachelor of Secondary Education - Filipino'], true))>Bachelor of Secondary Education - Filipino</option>
+                            <option value="Bachelor of Secondary Education - Mathematics" @selected(in_array($employee->department, ['Bachelor of Secondary Education - Mathematics'], true))>Bachelor of Secondary Education - Mathematics</option>
+                            <option value="Bachelor of Secondary Education - Social Science" @selected(in_array($employee->department, ['Bachelor of Secondary Education - Social Science'], true))>Bachelor of Secondary Education - Social Science</option>
+                            <option value="Bachelor of Elementary Education" @selected(in_array($employee->department, ['Bachelor of Elementary Education'], true))>Bachelor of Elementary Education</option>
                         </select>
 
                     </div>
@@ -71,7 +69,7 @@
                             <option value="" @selected(!$currentScheduleSlug)>— Select —</option>
                             @foreach ($schedules as $schedule)
                                 <option value="{{ $schedule->slug }}" @selected($currentScheduleSlug === $schedule->slug)>{{ $schedule->slug }} -> from
-                                    {{ $schedule->time_in }} to {{ $schedule->time_out }} </option>
+                                    {{ \Carbon\Carbon::parse($schedule->time_in)->format('g:i A') }} to {{ \Carbon\Carbon::parse($schedule->time_out)->format('g:i A') }} </option>
                             @endforeach
 
                         </select>

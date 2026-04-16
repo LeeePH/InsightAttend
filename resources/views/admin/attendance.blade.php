@@ -66,6 +66,25 @@
             text-align: center;
             color: #868e96;
         }
+        .dept-header-row td {
+            background: #f1f3f5;
+            font-weight: 600;
+            color: #343a40;
+            text-transform: none;
+            letter-spacing: 0;
+        }
+        .logs-controls {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .logs-controls .form-inline {
+            margin: 0;
+        }
+        .logs-controls label {
+            white-space: nowrap;
+        }
     </style>
 @endsection
 
@@ -89,23 +108,39 @@
                     <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
                         <div>
                             <h4 class="logs-title mb-1">Daily clock records</h4>
-                            <p class="text-muted mb-0 small">Time in and time out grouped by employee and date.</p>
+                            <p class="text-muted mb-0 small">
+                                Showing employees who recorded attendance on
+                                <strong>{{ $selectedDate->format('M j, Y') }}</strong>.
+                            </p>
                         </div>
-                        @if ($attendances->count() > 0)
-                            <span class="badge badge-primary badge-pill mt-2 mt-md-0 px-3 py-2">{{ $attendances->count() }} {{ Str::plural('record', $attendances->count()) }}</span>
-                        @endif
+                        <div class="logs-controls mt-2 mt-md-0">
+                            <form method="GET" action="{{ route('attendance') }}" class="form-inline">
+                                <label for="attendanceDate" class="mr-2 small text-muted mb-0">Select date</label>
+                                <input
+                                    type="date"
+                                    id="attendanceDate"
+                                    name="date"
+                                    class="form-control form-control-sm"
+                                    value="{{ $selectedDate->toDateString() }}"
+                                >
+                            </form>
+                            @if (($attendancesCount ?? 0) > 0)
+                                <span class="badge badge-primary badge-pill px-3 py-2">
+                                    {{ $attendancesCount }} {{ Str::plural('employee', $attendancesCount) }}
+                                </span>
+                            @endif
+                        </div>
                     </div>
 
-                    @if ($attendances->isEmpty())
+                    @if (($attendancesCount ?? 0) === 0)
                         <div class="logs-empty border rounded bg-light">
-                            <p class="mb-0">No attendance records yet.</p>
+                            <p class="mb-0">No attendance records for this date.</p>
                         </div>
                     @else
                         <div class="table-responsive attendance-logs-table-wrap">
                             <table class="table table-hover table-sm mb-0 attendance-logs-table">
                                 <thead>
                                     <tr>
-                                        <th scope="col">Date</th>
                                         <th scope="col">Employee</th>
                                         <th scope="col">Time in</th>
                                         <th scope="col">Time out</th>
@@ -113,51 +148,51 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach ($attendances as $attendance)
-                                        @php
-                                            $date = \Carbon\Carbon::parse($attendance->attendance_date);
-                                            $rawIn = $attendance->time_in;
-                                            $rawOut = $attendance->time_out;
-                                            $timeIn = $rawIn ? \Carbon\Carbon::parse(explode(',', (string) $rawIn)[0])->format('g:i A') : null;
-                                            $timeOut = $rawOut ? \Carbon\Carbon::parse(explode(',', (string) $rawOut)[0])->format('g:i A') : null;
-                                            $employee = $attendance->employee;
-                                            $sched = $employee ? $employee->schedules()->first() : null;
-                                        @endphp
-                                        <tr>
-                                            <td>
-                                                <div class="logs-date-primary">{{ $date->format('M j, Y') }}</div>
-                                                <div class="logs-date-sub">{{ $date->format('l') }}</div>
-                                            </td>
-                                            <td>
-                                                <div class="logs-emp-name">{{ $employee?->name ?? '—' }}</div>
-                                                <div class="logs-emp-id">ID {{ $attendance->emp_id }}</div>
-                                            </td>
-                                            <td>
-                                                @if ($timeIn)
-                                                    <span class="logs-time text-success">{{ $timeIn }}</span>
-                                                @else
-                                                    <span class="text-muted">—</span>
-                                                @endif
-                                            </td>
-                                            <td>
-                                                @if ($timeOut)
-                                                    <span class="logs-time text-primary">{{ $timeOut }}</span>
-                                                @else
-                                                    <span class="badge badge-light border text-muted">No checkout</span>
-                                                @endif
-                                            </td>
-                                            <td>
-                                                @if ($sched instanceof \App\Models\Schedule)
-                                                    <div class="logs-schedule-label">{{ $sched->slug }}</div>
-                                                    <div class="logs-schedule-range">
-                                                        {{ \Carbon\Carbon::parse($sched->time_in)->format('g:i A') }}
-                                                        – {{ \Carbon\Carbon::parse($sched->time_out)->format('g:i A') }}
-                                                    </div>
-                                                @else
-                                                    <span class="text-muted">—</span>
-                                                @endif
-                                            </td>
+                                    @foreach ($attendancesByDept as $dept => $deptAttendances)
+                                        <tr class="dept-header-row">
+                                            <td colspan="4">{{ $dept }}</td>
                                         </tr>
+                                        @foreach ($deptAttendances as $attendance)
+                                            @php
+                                                $rawIn = $attendance->time_in;
+                                                $rawOut = $attendance->time_out;
+                                                $timeIn = $rawIn ? \Carbon\Carbon::parse(explode(',', (string) $rawIn)[0])->format('g:i A') : null;
+                                                $timeOut = $rawOut ? \Carbon\Carbon::parse(explode(',', (string) $rawOut)[0])->format('g:i A') : null;
+                                                $employee = $attendance->employee;
+                                                $sched = $employee ? $employee->schedules()->first() : null;
+                                            @endphp
+                                            <tr>
+                                                <td>
+                                                    <div class="logs-emp-name">{{ $employee?->name ?? '—' }}</div>
+                                                    <div class="logs-date-sub">{{ $employee?->position ?? '—' }}</div>
+                                                </td>
+                                                <td>
+                                                    @if ($timeIn)
+                                                        <span class="logs-time text-success">{{ $timeIn }}</span>
+                                                    @else
+                                                        <span class="text-muted">—</span>
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    @if ($timeOut)
+                                                        <span class="logs-time text-primary">{{ $timeOut }}</span>
+                                                    @else
+                                                        <span class="badge badge-light border text-muted">No checkout</span>
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    @if ($sched instanceof \App\Models\Schedule)
+                                                        <div class="logs-schedule-label">{{ $sched->slug }}</div>
+                                                        <div class="logs-schedule-range">
+                                                            {{ \Carbon\Carbon::parse($sched->time_in)->format('g:i A') }}
+                                                            – {{ \Carbon\Carbon::parse($sched->time_out)->format('g:i A') }}
+                                                        </div>
+                                                    @else
+                                                        <span class="text-muted">—</span>
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                        @endforeach
                                     @endforeach
                                 </tbody>
                             </table>
@@ -167,4 +202,19 @@
             </div>
         </div>
     </div>
+@endsection
+
+@section('script')
+    <script>
+        (function () {
+            var input = document.getElementById('attendanceDate');
+            if (!input) return;
+            input.addEventListener('change', function () {
+                if (!input.value) return;
+                var url = new URL(window.location.href);
+                url.searchParams.set('date', input.value);
+                window.location.href = url.toString();
+            });
+        })();
+    </script>
 @endsection

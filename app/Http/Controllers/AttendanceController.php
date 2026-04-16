@@ -6,29 +6,61 @@ use DateTime;
 use App\Models\Employee;
 use App\Models\Latetime;
 use App\Models\Attendance;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Hash;
 use App\Http\Requests\AttendanceEmp;
+use Illuminate\Http\Request;
 
 class AttendanceController extends Controller
 {   
     //show attendance 
-    public function index()
+    public function index(Request $request)
     {  
-        // Get all attendances grouped by employee and date
+        $selectedDate = $request->query('date');
+        try {
+            $selected = $selectedDate ? Carbon::parse($selectedDate) : today();
+        } catch (\Throwable $e) {
+            $selected = today();
+        }
+        $selectedDate = $selected->toDateString();
+
+        // Backward-compat for older stored codes
+        $deptLabelMap = [
+            'SIT' => 'Bachelor of Science in Information Technology',
+            'SHTM' => 'Bachelor of Science in Hospitality Management',
+            'SED' => 'Bachelor of Secondary Education',
+        ];
+
+        $deptToLabel = function ($raw) use ($deptLabelMap) {
+            $raw = trim((string) ($raw ?? ''));
+            if ($raw === '') return 'Unassigned';
+            return $deptLabelMap[$raw] ?? $raw;
+        };
+
+        // Get attendances grouped by employee for selected date only
         $attendances = Attendance::select('emp_id', 'attendance_date')
             ->selectRaw('GROUP_CONCAT(CASE WHEN type = 0 THEN attendance_time END) as time_in')
             ->selectRaw('GROUP_CONCAT(CASE WHEN type = 1 THEN attendance_time END) as time_out')
+            ->where('attendance_date', $selectedDate)
             ->groupBy('emp_id', 'attendance_date')
-            ->orderBy('attendance_date', 'desc')
             ->orderBy('emp_id')
             ->get();
         
         // Load employee relationship for each record
         foreach ($attendances as $attendance) {
             $attendance->employee = Employee::find($attendance->emp_id);
+            $attendance->dept_label = $deptToLabel($attendance->employee?->department);
         }
+
+        $attendancesByDept = $attendances->groupBy(function ($a) {
+            return $a->dept_label ?? 'Unassigned';
+        })->sortKeys();
         
-        return view('admin.attendance')->with(['attendances' => $attendances]);
+        return view('admin.attendance')->with([
+            'selectedDate' => $selected,
+            'attendancesByDept' => $attendancesByDept,
+            'attendancesCount' => $attendances->count(),
+        ]);
     }
 
     //show late times
