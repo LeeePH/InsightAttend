@@ -25,9 +25,10 @@ class EmployeeRec extends FormRequest
     public function rules()
     {
         return [
-            'name' => ['required', 'string', 'min:3', 'max:64', 'regex:/^[A-Za-z][A-Za-z\s\.\'-]*$/'],
-            'position' => ['required', 'string', 'min:2', 'max:64', 'regex:/^[A-Za-z0-9][A-Za-z0-9\s\.\-\/&]*$/'],
-            'department' => 'nullable|string|max:64',
+            'name' => ['required', 'string', 'min:3', 'max:64'],
+            'position' => ['required', 'string', 'min:2', 'max:64'],
+            'department_id' => ['required', 'exists:departments,id'],
+            'phone' => ['nullable', 'regex:/^\+63\d{10}$/'],
             'email' => [
                 'nullable',
                 'email',
@@ -36,6 +37,8 @@ class EmployeeRec extends FormRequest
                 }),
             ],
             'schedule' => 'required|exists:schedules,slug',
+            'rotation_start_date' => ['nullable', 'date'],
+            'rotation_pattern' => ['nullable', 'string', 'max:255'],
             'password' => ['nullable', 'string', 'min:8'],
             'face_descriptor' => 'nullable|json',
             'face_image' => 'nullable|string',
@@ -45,10 +48,9 @@ class EmployeeRec extends FormRequest
     public function messages()
     {
         return [
-            'name.regex' => 'Name may contain letters, spaces, apostrophes, dots, and hyphens only.',
-            'position.regex' => 'Position may contain letters, numbers, spaces, dots, hyphens, slashes, and ampersands only.',
             'email.required' => 'Email is required when a login password is set.',
             'password.min' => 'Password must be at least 8 characters.',
+            'phone.regex' => 'Phone number must be in +63 format (e.g. +639xxxxxxxxx).',
         ];
     }
 }

@@ -6,6 +6,9 @@ use App\Models\Employee;
 use App\Models\ResignationRequest;
 use App\Services\EmployeeRequestFormService;
 use Illuminate\Http\Request;
+use App\Models\User;
+use App\Notifications\PendingRequestNotification;
+use App\Notifications\RequestDecisionNotification;
 
 class ResignationController extends Controller
 {
@@ -86,13 +89,30 @@ class ResignationController extends Controller
         /** @var Employee $employee */
         $employee = auth()->user()->employee;
 
-        ResignationRequest::create([
+        $req = ResignationRequest::create([
             'emp_id' => $employee->id,
             'last_working_day' => $request->last_working_day,
             'reason' => $request->reason,
             'handover_notes' => $request->handover_notes,
             'status' => ResignationRequest::STATUS_PENDING,
         ]);
+
+        // Notify admins about pending resignation request
+        $adminUsers = User::query()
+            ->whereHas('roles', function ($q) {
+                $q->where('slug', 'admin');
+            })
+            ->get();
+        $adminUrl = route('resignation.admin');
+        foreach ($adminUsers as $admin) {
+            $admin->notify(new PendingRequestNotification(
+                'resignation',
+                (int) $req->id,
+                $employee->name ?? ('Employee #' . $employee->id),
+                (string) $req->created_at,
+                $adminUrl
+            ));
+        }
 
         return redirect()->route('employee.dashboard')->with('success', 'Your resignation request has been submitted successfully.');
     }
@@ -112,6 +132,20 @@ class ResignationController extends Controller
         $requestItem->remarks = $request->remarks ?? '';
         $requestItem->save();
 
+        // Notify employee about approval decision
+        $employee = $requestItem->employee;
+        $user = $employee ? User::where('email', $employee->email)->first() : null;
+        if ($user) {
+            $user->notify(new RequestDecisionNotification(
+                'resignation',
+                (int) $requestItem->id,
+                'approved',
+                (string) ($requestItem->remarks ?? ''),
+                (string) ($requestItem->reviewed_at ?? now()),
+                route('employee.dashboard')
+            ));
+        }
+
         return redirect()->route('resignation.approvalLetter', $requestItem->id);
     }
 
@@ -123,6 +157,20 @@ class ResignationController extends Controller
         $requestItem->reviewed_at = now();
         $requestItem->remarks = $request->remarks ?? '';
         $requestItem->save();
+
+        // Notify employee about rejection decision
+        $employee = $requestItem->employee;
+        $user = $employee ? User::where('email', $employee->email)->first() : null;
+        if ($user) {
+            $user->notify(new RequestDecisionNotification(
+                'resignation',
+                (int) $requestItem->id,
+                'rejected',
+                (string) ($requestItem->remarks ?? ''),
+                (string) ($requestItem->reviewed_at ?? now()),
+                route('employee.dashboard')
+            ));
+        }
 
         return redirect()->route('resignation.admin')->with('error', 'Resignation request rejected.');
     }

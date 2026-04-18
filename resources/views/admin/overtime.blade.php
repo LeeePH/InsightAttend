@@ -58,10 +58,18 @@
                                             <td>{{ $overtime->duration }} </td>
                                             <td>
                                                 @php $sched = $overtime->employee->schedules->first(); @endphp
-                                                {{ $sched?->time_in ? \Carbon\Carbon::parse($sched->time_in)->format('g:i A') : '—' }}
+                                                @if ($sched && ($sched->schedule_type ?? 'fixed') === 'shifting')
+                                                    Shifting
+                                                @else
+                                                    {{ $sched?->time_in ? \Carbon\Carbon::parse($sched->time_in)->format('g:i A') : '—' }}
+                                                @endif
                                             </td>
                                             <td>
-                                                {{ $sched?->time_out ? \Carbon\Carbon::parse($sched->time_out)->format('g:i A') : '—' }}
+                                                @if ($sched && ($sched->schedule_type ?? 'fixed') === 'shifting')
+                                                    Shifting
+                                                @else
+                                                    {{ $sched?->time_out ? \Carbon\Carbon::parse($sched->time_out)->format('g:i A') : '—' }}
+                                                @endif
                                             </td>
                                         </tr>
 

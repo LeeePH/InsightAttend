@@ -176,8 +176,20 @@ use Illuminate\Support\Str;
                                         <div class="label">Schedule</div>
                                         <div class="value">
                                             @if ($sched)
-                                                {{ \Carbon\Carbon::parse($sched->time_in)->format('h:i A') }}
-                                                – {{ \Carbon\Carbon::parse($sched->time_out)->format('h:i A') }}
+                                                @if (($sched->schedule_type ?? 'fixed') === 'shifting')
+                                                    Shifting
+                                                    @if(isset($expectedShift) && $expectedShift)
+                                                        <div class="text-muted small">
+                                                            {{ $expectedShift->shift_code ? ($expectedShift->shift_code . ' · ') : '' }}{{ $expectedShift->name }}
+                                                            @if(isset($expectedStart) && isset($expectedEnd) && $expectedStart && $expectedEnd)
+                                                                ({{ $expectedStart->format('h:i A') }} – {{ $expectedEnd->format('h:i A') }})
+                                                            @endif
+                                                        </div>
+                                                    @endif
+                                                @else
+                                                    {{ \Carbon\Carbon::parse($sched->time_in)->format('h:i A') }}
+                                                    – {{ \Carbon\Carbon::parse($sched->time_out)->format('h:i A') }}
+                                                @endif
                                             @else
                                                 —
                                             @endif

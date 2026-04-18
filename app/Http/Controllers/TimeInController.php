@@ -6,6 +6,10 @@ use App\Models\Employee;
 use App\Models\Attendance;
 use Illuminate\Http\Request;
 use RealRashid\SweetAlert\Facades\Alert;
+use App\Services\ShiftResolver;
+use Carbon\Carbon;
+use App\Models\User;
+use App\Notifications\LateWarningNotification;
 
 class TimeInController extends Controller
 {
@@ -84,15 +88,29 @@ class TimeInController extends Controller
         $attendance->attendance_time = date('H:i:s');
         $attendance->attendance_date = date('Y-m-d');
         
-        // Check if late
-        if ($employee->schedules->first()) {
-            $scheduleTimeIn = strtotime($employee->schedules->first()->time_in);
-            $currentTime = strtotime(date('H:i:s'));
-            
-            if ($currentTime > $scheduleTimeIn) {
-                $attendance->status = 0; // Late
-            } else {
-                $attendance->status = 1; // On time
+        // Check if late (fixed or shifting) with grace + overnight support
+        $today = Carbon::parse(date('Y-m-d'));
+        $resolved = ShiftResolver::resolve($employee, $today);
+        if (($resolved['is_off'] ?? false) === true) {
+            // Rest day: do not mark late
+            $attendance->status = 1;
+        } elseif (!empty($resolved['start'])) {
+            $start = $resolved['start']->copy();
+            $grace = (int) ($resolved['grace_minutes'] ?? 0);
+            $deadline = $start->addMinutes(max(0, $grace));
+            $now = Carbon::parse($attendance->attendance_date . ' ' . $attendance->attendance_time);
+            $isLate = $now->gt($deadline);
+            $attendance->status = $isLate ? 0 : 1;
+
+            if ($isLate) {
+                $user = User::where('email', $employee->email)->first();
+                $timeInPretty = Carbon::parse($attendance->attendance_time)->format('g:i A');
+                $msg = 'Grace period: ' . $grace . ' minute(s).';
+                if ($user) {
+                    $user->notify(new LateWarningNotification($attendance->attendance_date, $timeInPretty, $msg));
+                } else {
+                    $employee->notify(new LateWarningNotification($attendance->attendance_date, $timeInPretty, $msg));
+                }
             }
         } else {
             $attendance->status = 1;

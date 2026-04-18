@@ -40,24 +40,11 @@
                                 <div class="card">
                                     <div class="card-body">
                                                 @php
-                                                    $deptLabelMap = [
-                                                        // Backward-compat for older stored codes
-                                                        'SIT' => 'Bachelor of Science in Information Technology',
-                                                        'SHTM' => 'Bachelor of Science in Hospitality Management',
-                                                        'SED' => 'Bachelor of Secondary Education',
-                                                    ];
-
-                                                    $deptToLabel = function ($raw) use ($deptLabelMap) {
-                                                        $raw = trim((string) ($raw ?? ''));
-                                                        if ($raw === '') return '';
-                                                        return $deptLabelMap[$raw] ?? $raw;
-                                                    };
-
                                                     $deptOptions = [];
                                                     foreach ($employees as $emp) {
-                                                        $deptOpt = $deptToLabel($emp->department ?? null);
-                                                        if ($deptOpt !== '') {
-                                                            $deptOptions[$deptOpt] = true;
+                                                        $deptName = $emp->department?->name ?? null;
+                                                        if ($deptName) {
+                                                            $deptOptions[$deptName] = true;
                                                         }
                                                     }
                                                     $deptOptions = array_keys($deptOptions);
@@ -97,10 +84,7 @@
                                                             <td>{{$employee->name}}</td>
                                                             <td>{{$employee->position}}</td>
                                                             <td>
-                                                                @php
-                                                                    $dept = $deptToLabel($employee->department ?? null) ?: null;
-                                                                @endphp
-                                                                {{ $dept ?: 'N/A' }}
+                                                                {{ $employee->department?->name ?? 'N/A' }}
                                                             </td>
                                                             <td>{{$employee->email}}</td>
                                                             <td>
@@ -207,9 +191,7 @@
         const employeeForm = document.getElementById('employeeForm');
         if (!employeeForm) return;
 
-        const NAME_PART_RE = /^[A-Za-z][A-Za-z\s.'-]*$/;
         const SUFFIX_RE = /^[A-Za-z0-9][A-Za-z0-9.\s'-]*$/;
-        const POSITION_RE = /^[A-Za-z0-9][A-Za-z0-9\s.\-/&]*$/;
         const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         const PASS_MIN = 8;
 
@@ -272,7 +254,6 @@
             }
             if (t.length < 2) return 'Surname must be at least 2 characters.';
             if (t.length > 64) return 'Surname must not exceed 64 characters.';
-            if (!NAME_PART_RE.test(t)) return 'Surname contains invalid characters.';
             return '';
         }
 
@@ -283,7 +264,6 @@
             }
             if (t.length < 2) return 'First Name must be at least 2 characters.';
             if (t.length > 64) return 'First Name must not exceed 64 characters.';
-            if (!NAME_PART_RE.test(t)) return 'First Name contains invalid characters.';
             return '';
         }
 
@@ -291,7 +271,6 @@
             const t = (value || '').trim();
             if (t.length === 0) return '';
             if (t.length > 64) return 'Middle Name must not exceed 64 characters.';
-            if (!NAME_PART_RE.test(t)) return 'Middle Name contains invalid characters.';
             return '';
         }
 
@@ -319,15 +298,12 @@
             }
             if (t.length < 2) return 'Position must be at least 2 characters.';
             if (t.length > 64) return 'Position must not exceed 64 characters.';
-            if (!POSITION_RE.test(t)) {
-                return 'Position may contain letters, numbers, spaces, dots, hyphens, slashes, and ampersands only (must start with a letter or number).';
-            }
             return '';
         }
 
         function validateAddEmpDepartment(value) {
             if (value) return '';
-            return addEmpShowRequired('department') ? 'Please select a department.' : '';
+            return addEmpShowRequired('department_id') ? 'Please select a department.' : '';
         }
 
         function validateAddEmpSchedule(value) {
@@ -368,7 +344,7 @@
             const suffixEl = addEmpField('suffix');
             const nameEl = addEmpField('name');
             const posEl = addEmpField('position');
-            const depEl = addEmpField('department');
+            const depEl = addEmpField('department_id');
             const emEl = addEmpField('email');
             const passEl = addEmpField('password');
             const schEl = addEmpField('schedule');
@@ -378,7 +354,7 @@
             addEmpSetError('middle_name', middleEl ? validateAddEmpMiddleName(middleEl.value) : '');
             addEmpSetError('suffix', suffixEl ? validateAddEmpSuffix(suffixEl.value) : '');
             addEmpSetError('position', posEl ? validateAddEmpPosition(posEl.value) : '');
-            addEmpSetError('department', depEl ? validateAddEmpDepartment(depEl.value) : '');
+            addEmpSetError('department_id', depEl ? validateAddEmpDepartment(depEl.value) : '');
             addEmpSetError('password', passEl ? validateAddEmpPassword(passEl.value) : '');
             addEmpSetError('email', validateAddEmpEmail(emEl ? emEl.value : '', passEl ? passEl.value : ''));
             addEmpSetError('schedule', schEl ? validateAddEmpSchedule(schEl.value) : '');
@@ -425,7 +401,7 @@
             });
         });
 
-        ['department', 'schedule'].forEach(function (fieldName) {
+        ['department_id', 'schedule'].forEach(function (fieldName) {
             const el = addEmpField(fieldName);
             if (!el) return;
             el.addEventListener('blur', function () {

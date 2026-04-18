@@ -86,8 +86,14 @@ class AttendanceController extends Controller
 
     public static function lateTimeDevice($att_dateTime, Employee $employee)
     {
+        $schedule = $employee->schedules->first();
+        // For shifting schedules, late duration is not tracked in Latetime table yet.
+        if (!$schedule || $schedule->schedule_type !== 'fixed' || !$schedule->time_in) {
+            return;
+        }
+
         $attendance_time = new DateTime($att_dateTime);
-        $checkin = new DateTime($employee->schedules->first()->time_in);
+        $checkin = new DateTime($schedule->time_in);
         $difference = $checkin->diff($attendance_time)->format('%H:%I:%S');
 
         $latetime = new Latetime();

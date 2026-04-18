@@ -30,6 +30,23 @@
                                     <i class="ti-time"></i> <span> Schedule </span>
                                 </a>
                             </li>
+                            <li class="{{ (request()->is('departments') || request()->is('departments/*') || request()->is('department-reports')) ? 'mm-active' : '' }}">
+                                <a href="javascript:void(0);" class="has-arrow waves-effect {{ (request()->is('departments') || request()->is('departments/*') || request()->is('department-reports')) ? 'mm active' : '' }}">
+                                    <i class="ti-layers"></i> <span> Department Management </span>
+                                </a>
+                                <ul class="submenu" aria-expanded="false">
+                                    <li>
+                                        <a href="{{ route('departments.index') }}" class="waves-effect {{ request()->is('departments') || request()->is('departments/*') ? 'mm active' : '' }}">
+                                            <span>Departments</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="{{ route('departments.report') }}" class="waves-effect {{ request()->is('department-reports') ? 'mm active' : '' }}">
+                                            <span>Department Reports</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
                             <li class="">
                                 <a href="/check" class="waves-effect {{ request()->is("check") || request()->is("check/*") ? "mm active" : "" }}">
                                     <i class="dripicons-to-do"></i> <span> Attendance Sheet </span>

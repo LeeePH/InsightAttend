@@ -44,23 +44,17 @@
                                     <label for="add_emp_position">Position</label>
                                     <input type="text" class="form-control" placeholder="Enter Employee Position" id="add_emp_position" name="position"
                                         required autocomplete="organization-title" maxlength="64" />
-                                    <small class="form-text text-muted">At least 2 characters; letters, numbers, spaces, dots, hyphens, slashes, and ampersands.</small>
                                     <div class="add-emp-err text-danger small mt-1" data-for="position" role="alert" style="display:none;"></div>
                                 </div>
                                 <div class="form-group">
                                     <label for="add_emp_department">Department</label>
-                                    <select class="form-control" id="add_emp_department" name="department" required>
+                                    <select class="form-control" id="add_emp_department" name="department_id" required>
                                         <option value="" selected>- Select Department -</option>
-                                        <option value="Bachelor of Science in Information Technology">Bachelor of Science in Information Technology</option>
-                                        <option value="Bachelor of Science in Hospitality Management">Bachelor of Science in Hospitality Management</option>
-                                        <option value="Bachelor of Science in Tourism Management">Bachelor of Science in Tourism Management</option>
-                                        <option value="Bachelor of Secondary Education - English">Bachelor of Secondary Education - English</option>
-                                        <option value="Bachelor of Secondary Education - Filipino">Bachelor of Secondary Education - Filipino</option>
-                                        <option value="Bachelor of Secondary Education - Mathematics">Bachelor of Secondary Education - Mathematics</option>
-                                        <option value="Bachelor of Secondary Education - Social Science">Bachelor of Secondary Education - Social Science</option>
-                                        <option value="Bachelor of Elementary Education">Bachelor of Elementary Education</option>
+                                        @foreach(($departments ?? []) as $dept)
+                                            <option value="{{ $dept->id }}">{{ $dept->name }}</option>
+                                        @endforeach
                                     </select>
-                                    <div class="add-emp-err text-danger small mt-1" data-for="department" role="alert" style="display:none;"></div>
+                                    <div class="add-emp-err text-danger small mt-1" data-for="department_id" role="alert" style="display:none;"></div>
                                 </div>
 
                                 
@@ -71,6 +65,10 @@
                                     <input type="email" class="form-control" id="add_emp_email" name="email" autocomplete="email">
 
                                     <div class="add-emp-err text-danger small mt-1" data-for="email" role="alert" style="display:none;"></div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="add_emp_phone" class="col-sm-3 control-label">Phone (SMS)</label>
+                                    <input type="text" class="form-control" id="add_emp_phone" name="phone" placeholder="+639xxxxxxxxx">
                                 </div>
                                 <div class="form-group">
                                     <label for="add_emp_password" class="col-sm-3 control-label">Password</label>

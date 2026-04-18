@@ -28,6 +28,11 @@ class User extends Authenticatable
         return $this->hasOne(Employee::class, 'email', 'email');
     }
 
+    public function routeNotificationForTwilioSms($notification = null)
+    {
+        return $this->employee?->phone;
+    }
+
     public function hasAnyRole($roles)
     {
         if (Is_array($roles)) {

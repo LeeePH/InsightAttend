@@ -10,6 +10,8 @@ use Carbon\Carbon;
 use App\Models\Schedule;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use App\Services\AttendanceStatusService;
+use App\Services\ShiftResolver;
 
 class HomeController extends Controller
 {
@@ -49,35 +51,18 @@ class HomeController extends Controller
         $today = today()->toDateString();
         $sched = $employee->schedules()->first();
 
-        $timeInRow = Attendance::query()
-            ->where('emp_id', $employee->id)
-            ->where('attendance_date', $today)
-            ->where('type', 0)
-            ->orderBy('attendance_time')
-            ->first();
+        // Compute daily status against expected shift (supports shifting + overnight)
+        $status = AttendanceStatusService::computeForDate($employee, Carbon::parse($today));
+        $statusLabel = $status['status_label'];
+        $timeIn = $status['actual_in'];
+        $timeOut = $status['actual_out'];
+        $workedSeconds = $status['worked_seconds'];
 
-        $timeOutRow = Attendance::query()
-            ->where('emp_id', $employee->id)
-            ->where('attendance_date', $today)
-            ->where('type', 1)
-            ->orderBy('attendance_time', 'desc')
-            ->first();
-
-        $timeIn = $timeInRow?->attendance_time ? Carbon::parse($timeInRow->attendance_time) : null;
-        $timeOut = $timeOutRow?->attendance_time ? Carbon::parse($timeOutRow->attendance_time) : null;
-
-        $statusLabel = 'Absent';
-        if ($timeInRow) {
-            $statusLabel = ((int) $timeInRow->status === 0) ? 'Late' : 'Present';
-        } else {
-            // If schedule exists and it's still before time-in, show Absent (not yet)
-            $statusLabel = 'Absent';
-        }
-
-        $workedSeconds = null;
-        if ($timeIn && $timeOut && $timeOut->greaterThan($timeIn)) {
-            $workedSeconds = $timeOut->diffInSeconds($timeIn);
-        }
+        // For display: expected shift window (if available)
+        $resolved = ShiftResolver::resolve($employee, Carbon::parse($today));
+        $expectedStart = $resolved['start'] ?? null;
+        $expectedEnd = $resolved['end'] ?? null;
+        $expectedShift = $resolved['shift'] ?? null;
         
         // Get employee's attendance records
         $attendances = Attendance::where('emp_id', $employee->id)
@@ -100,7 +85,10 @@ class HomeController extends Controller
             'statusLabel',
             'timeIn',
             'timeOut',
-            'workedSeconds'
+            'workedSeconds',
+            'expectedStart',
+            'expectedEnd',
+            'expectedShift'
         ));
     }
 

@@ -13,7 +13,7 @@ class Kernel extends ConsoleKernel
      * @var array
      */
     protected $commands = [
-        //
+        \App\Console\Commands\CheckAbsencesCommand::class,
     ];
 
     /**
@@ -25,6 +25,7 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         $schedule->command('backup:run --label=auto --keep=30')->dailyAt('01:00');
+        $schedule->command('attendance:check-absences')->dailyAt((string) config('attendance.absence_check_time', '10:30'));
     }
 
     /**

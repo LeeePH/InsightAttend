@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class ScheduleEmp extends FormRequest
 {
@@ -25,8 +26,13 @@ class ScheduleEmp extends FormRequest
     {
         return [
             'slug' => 'required|string|min:3|max:32|alpha_dash',
-            'time_in' => 'required|date_format:H:i|before:time_out',
-            'time_out' => 'required|date_format:H:i',
+            'schedule_type' => ['required', 'string', Rule::in(['fixed', 'shifting'])],
+            'time_in' => 'nullable|date_format:H:i|before:time_out|required_if:schedule_type,fixed',
+            'time_out' => 'nullable|date_format:H:i|required_if:schedule_type,fixed',
+            'break_minutes' => 'required|integer|min:0|max:600',
+            'grace_minutes' => 'required|integer|min:0|max:120',
+            'break_start' => 'nullable|date_format:H:i',
+            'break_end' => 'nullable|date_format:H:i',
         ];
     }
 }

@@ -184,8 +184,12 @@
                                                     @if ($sched instanceof \App\Models\Schedule)
                                                         <div class="logs-schedule-label">{{ $sched->slug }}</div>
                                                         <div class="logs-schedule-range">
-                                                            {{ \Carbon\Carbon::parse($sched->time_in)->format('g:i A') }}
-                                                            – {{ \Carbon\Carbon::parse($sched->time_out)->format('g:i A') }}
+                                                            @if (($sched->schedule_type ?? 'fixed') === 'shifting')
+                                                                Shifting
+                                                            @else
+                                                                {{ \Carbon\Carbon::parse($sched->time_in)->format('g:i A') }}
+                                                                – {{ \Carbon\Carbon::parse($sched->time_out)->format('g:i A') }}
+                                                            @endif
                                                         </div>
                                                     @else
                                                         <span class="text-muted">—</span>

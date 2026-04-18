@@ -19,6 +19,10 @@ use App\Models\FingerDevices;
 use App\Models\Employee;
 use App\Models\Attendance;
 use App\Models\Leave;
+use App\Services\ShiftResolver;
+use Carbon\Carbon;
+use App\Models\User;
+use App\Notifications\LateWarningNotification;
 
 use Gate;
 
@@ -157,9 +161,26 @@ class BiometricDeviceController extends Controller
                     $att_table->attendance_date = date('Y-m-d', strtotime($value['timestamp']));
                     $att_table->type = $value['type'];
 
-                    if (!($employee->schedules->first()->time_in >= $att_table->attendance_time)) {
-                        $att_table->status = 0;
-                        AttendanceController::lateTimeDevice($value['timestamp'],$employee);
+                    $attDate = Carbon::parse($att_table->attendance_date);
+                    $resolved = ShiftResolver::resolve($employee, $attDate);
+                    if (($resolved['is_off'] ?? false) === true) {
+                        $att_table->status = 1;
+                    } elseif (!empty($resolved['start'])) {
+                        $deadline = $resolved['start']->copy()->addMinutes(max(0, (int) ($resolved['grace_minutes'] ?? 0)));
+                        $actual = Carbon::parse($att_table->attendance_date . ' ' . $att_table->attendance_time);
+                        if ($actual->gt($deadline)) {
+                            $att_table->status = 0;
+                            AttendanceController::lateTimeDevice($value['timestamp'],$employee);
+
+                            $user = User::where('email', $employee->email)->first();
+                            $timeInPretty = Carbon::parse($att_table->attendance_time)->format('g:i A');
+                            $msg = 'Your time-in was recorded beyond the allowed time.';
+                            if ($user) {
+                                $user->notify(new LateWarningNotification($att_table->attendance_date, $timeInPretty, $msg));
+                            } else {
+                                $employee->notify(new LateWarningNotification($att_table->attendance_date, $timeInPretty, $msg));
+                            }
+                        }
                     }
                     $att_table->save();
                 }

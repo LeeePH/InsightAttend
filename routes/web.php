@@ -83,6 +83,12 @@ Route::group(['middleware' => ['auth', 'Role'], 'roles' => ['admin']], function 
     Route::get('/admin', '\App\Http\Controllers\AdminController@index')->name('admin');
 
     Route::resource('/schedule', '\App\Http\Controllers\ScheduleController');
+    Route::get('/schedule/{schedule}/shifts', '\App\Http\Controllers\ScheduleController@shifts')->name('schedule.shifts');
+    Route::post('/schedule/{schedule}/shifts', '\App\Http\Controllers\ScheduleController@storeShift')->name('schedule.shifts.store');
+    Route::put('/schedule/{schedule}/shifts/{shift}', '\App\Http\Controllers\ScheduleController@updateShift')->name('schedule.shifts.update');
+    Route::delete('/schedule/{schedule}/shifts/{shift}', '\App\Http\Controllers\ScheduleController@destroyShift')->name('schedule.shifts.destroy');
+    Route::resource('/departments', '\App\Http\Controllers\DepartmentController');
+    Route::get('/department-reports', '\App\Http\Controllers\DepartmentReportController@index')->name('departments.report');
 
     Route::get('/check', '\App\Http\Controllers\CheckController@index')->name('check');
     Route::get('/sheet-report', '\App\Http\Controllers\CheckController@sheetReport')->name('sheet-report');
@@ -110,6 +116,10 @@ Route::group(['middleware' => ['auth', 'Role'], 'roles' => ['admin']], function 
 Route::group(['middleware' => ['auth']], function () {
 
     // Route::get('/home', 'HomeController@index')->name('home');
+
+    Route::get('/notifications', '\App\Http\Controllers\NotificationController@index')->name('notifications.index');
+    Route::post('/notifications/{id}/read', '\App\Http\Controllers\NotificationController@markRead')->name('notifications.read');
+    Route::post('/notifications/read-all', '\App\Http\Controllers\NotificationController@markAllRead')->name('notifications.read_all');
 
 
 

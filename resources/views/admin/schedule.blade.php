@@ -50,9 +50,11 @@
                                 <thead>
                                     <tr>
                                         <th data-priority="1">ID</th>
-                                        <th data-priority="2">Shift</th>
-                                        <th data-priority="3">Time In</th>
-                                        <th data-priority="4">Time Out</th>
+                                        <th data-priority="2">Schedule</th>
+                                        <th data-priority="3">Type</th>
+                                        <th data-priority="4">Time In</th>
+                                        <th data-priority="5">Time Out</th>
+                                        <th data-priority="6">Break</th>
                                         <th data-priority="5">Action</th>
                                      
 
@@ -63,10 +65,30 @@
                                         <tr>
                                             <td> {{ $schedule->id }} </td>
                                             <td> {{ $schedule->slug }} </td>
-                                            <td> {{ \Carbon\Carbon::parse($schedule->time_in)->format('g:i A') }} </td>
-                                            <td> {{ \Carbon\Carbon::parse($schedule->time_out)->format('g:i A') }} </td>
+                                            <td>
+                                                @if (($schedule->schedule_type ?? 'fixed') === 'shifting')
+                                                    <span class="badge badge-info">Shifting</span>
+                                                @else
+                                                    <span class="badge badge-secondary">Fixed</span>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                {{ $schedule->time_in ? \Carbon\Carbon::parse($schedule->time_in)->format('g:i A') : '—' }}
+                                            </td>
+                                            <td>
+                                                {{ $schedule->time_out ? \Carbon\Carbon::parse($schedule->time_out)->format('g:i A') : '—' }}
+                                            </td>
+                                            <td>
+                                                {{ (int) ($schedule->break_minutes ?? 0) }} min
+                                            </td>
                                             <td>
 
+                                                @if (($schedule->schedule_type ?? 'fixed') === 'shifting')
+                                                    <a href="{{ route('schedule.shifts', $schedule) }}"
+                                                        class="btn btn-info btn-sm btn-flat">
+                                                        <i class="fa fa-random"></i> Shifts
+                                                    </a>
+                                                @endif
                                                 <a href="#edit{{ $schedule->slug }}" data-toggle="modal"
                                                     class="btn btn-success btn-sm edit btn-flat"><i class='fa fa-edit'></i>
                                                     Edit</a>

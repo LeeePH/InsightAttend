@@ -10,6 +10,10 @@ use App\Models\Leave;
 use Illuminate\Support\Facades\Hash;
 use App\Http\Requests\AttendanceEmp;
 use Illuminate\Http\Request;
+use App\Services\ShiftResolver;
+use Carbon\Carbon;
+use App\Notifications\LateWarningNotification;
+use App\Models\User;
 
 
 class ApiController extends Controller
@@ -72,10 +76,27 @@ class ApiController extends Controller
                     $attendance->attendance_time = date("H:i:s");
                     $attendance->attendance_date = date("Y-m-d");
 
-                    if (!($employee->schedules->first()->time_in >= $attendance->attendance_time)) {
-                        $attendance->status = 0;
-                        AttendanceController::lateTime($employee);
-                    };
+                    $today = Carbon::parse($attendance->attendance_date);
+                    $resolved = ShiftResolver::resolve($employee, $today);
+                    if (($resolved['is_off'] ?? false) === true) {
+                        $attendance->status = 1;
+                    } elseif (!empty($resolved['start'])) {
+                        $deadline = $resolved['start']->copy()->addMinutes(max(0, (int) ($resolved['grace_minutes'] ?? 0)));
+                        $actual = Carbon::parse($attendance->attendance_date . ' ' . $attendance->attendance_time);
+                        if ($actual->gt($deadline)) {
+                            $attendance->status = 0;
+                            AttendanceController::lateTime($employee);
+
+                            $user = User::where('email', $employee->email)->first();
+                            $timeInPretty = Carbon::parse($attendance->attendance_time)->format('g:i A');
+                            $msg = 'Your time-in was recorded beyond the allowed time.';
+                            if ($user) {
+                                $user->notify(new LateWarningNotification($attendance->attendance_date, $timeInPretty, $msg));
+                            } else {
+                                $employee->notify(new LateWarningNotification($attendance->attendance_date, $timeInPretty, $msg));
+                            }
+                        }
+                    }
 
                     $attendance->save();
                  } else {

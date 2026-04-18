@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use App\Notifications\PendingRequestNotification;
+use App\Notifications\RequestDecisionNotification;
 
 class LeaveController extends Controller
 {
@@ -222,6 +224,24 @@ class LeaveController extends Controller
             $leave->save();
         }
 
+        // Notify admins about pending leave request
+        $employee = Employee::find($leave->emp_id);
+        $adminUsers = User::query()
+            ->whereHas('roles', function ($q) {
+                $q->where('slug', 'admin');
+            })
+            ->get();
+        $adminUrl = route('leave');
+        foreach ($adminUsers as $admin) {
+            $admin->notify(new PendingRequestNotification(
+                'leave',
+                (int) $leave->id,
+                $employee?->name ?? ('Employee #' . $leave->emp_id),
+                (string) $leave->created_at,
+                $adminUrl
+            ));
+        }
+
         // Redirect to employee dashboard with success message
         return redirect()->route('employee.dashboard')->with(['success' => 'Leave request submitted successfully!']);
     }
@@ -255,6 +275,20 @@ class LeaveController extends Controller
         $leave->approved_at = now();
         $leave->remarks = $request->remarks ?? '';
         $leave->save();
+
+        // Notify employee about approval decision
+        $employee = $leave->employee;
+        $user = $employee ? User::where('email', $employee->email)->first() : null;
+        if ($user) {
+            $user->notify(new RequestDecisionNotification(
+                'leave',
+                (int) $leave->id,
+                'approved',
+                (string) ($leave->remarks ?? ''),
+                (string) ($leave->approved_at ?? now()),
+                route('employee.dashboard')
+            ));
+        }
         
         return redirect()->route('leave.approvalLetter', $leave->id);
     }
@@ -267,6 +301,20 @@ class LeaveController extends Controller
         $leave->approved_at = now();
         $leave->remarks = $request->remarks ?? '';
         $leave->save();
+
+        // Notify employee about rejection decision
+        $employee = $leave->employee;
+        $user = $employee ? User::where('email', $employee->email)->first() : null;
+        if ($user) {
+            $user->notify(new RequestDecisionNotification(
+                'leave',
+                (int) $leave->id,
+                'rejected',
+                (string) ($leave->remarks ?? ''),
+                (string) ($leave->approved_at ?? now()),
+                route('employee.dashboard')
+            ));
+        }
         
         return redirect()->route('leave')->with(['error' => 'Leave request rejected!']);
     }
