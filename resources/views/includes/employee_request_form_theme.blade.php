@@ -4,12 +4,12 @@
     $hex = function ($v, $fallback) {
         return is_string($v) && preg_match('/^#[0-9A-Fa-f]{6}$/', $v) ? $v : $fallback;
     };
-    $accent = $hex($ui['accent'] ?? null, '#2e3f5c');
-    $accentSoft = $hex($ui['accent_soft'] ?? null, '#e8edf6');
-    $bg = $hex($ui['bg'] ?? null, '#f2f5fa');
-    $text = $hex($ui['text'] ?? null, '#1f2a3d');
-    $muted = $hex($ui['muted'] ?? null, '#6b7587');
-    $border = $hex($ui['border'] ?? null, '#dde3ed');
+    $accent = $hex($ui['accent'] ?? null, '#8B4513');
+    $accentSoft = $hex($ui['accent_soft'] ?? null, '#f3e4d7');
+    $bg = $hex($ui['bg'] ?? null, '#f8f1eb');
+    $text = $hex($ui['text'] ?? null, '#3e2412');
+    $muted = $hex($ui['muted'] ?? null, '#7b5a45');
+    $border = $hex($ui['border'] ?? null, '#e2cdbd');
     $radius = isset($ui['card_radius']) ? max(0, min(40, (int) $ui['card_radius'])) : 14;
     $wrap = isset($pageWrapperClass) && is_string($pageWrapperClass) && preg_match('/^[a-z0-9-]+$/', $pageWrapperClass)
         ? $pageWrapperClass

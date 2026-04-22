@@ -10,18 +10,18 @@
 
 <style>
     :root {
-        --welcome-bg-deep: #070b12;
+        --welcome-bg-deep: #2d190f;
         --welcome-surface: rgba(255, 255, 255, 0.06);
         --welcome-surface-hover: rgba(255, 255, 255, 0.1);
         --welcome-border: rgba(255, 255, 255, 0.12);
         --welcome-text: #f1f5f9;
         --welcome-muted: rgba(241, 245, 249, 0.65);
-        --welcome-accent: #38bdf8;
-        --welcome-accent-soft: rgba(56, 189, 248, 0.18);
-        --welcome-in: #34d399;
-        --welcome-in-soft: rgba(52, 211, 153, 0.15);
-        --welcome-out: #f472b6;
-        --welcome-out-soft: rgba(244, 114, 182, 0.15);
+        --welcome-accent: #8B4513;
+        --welcome-accent-soft: rgba(139, 69, 19, 0.25);
+        --welcome-in: #b96a34;
+        --welcome-in-soft: rgba(185, 106, 52, 0.22);
+        --welcome-out: #6f330d;
+        --welcome-out-soft: rgba(111, 51, 13, 0.2);
         --welcome-radius: 20px;
         --welcome-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
         --welcome-font: "DM Sans", system-ui, -apple-system, sans-serif;
@@ -45,9 +45,9 @@
         position: fixed;
         inset: 0;
         background:
-            radial-gradient(ellipse 120% 80% at 10% -20%, rgba(56, 189, 248, 0.22), transparent 50%),
-            radial-gradient(ellipse 90% 70% at 100% 0%, rgba(244, 114, 182, 0.12), transparent 45%),
-            radial-gradient(ellipse 70% 50% at 50% 100%, rgba(52, 211, 153, 0.08), transparent 50%),
+            radial-gradient(ellipse 120% 80% at 10% -20%, rgba(139, 69, 19, 0.32), transparent 50%),
+            radial-gradient(ellipse 90% 70% at 100% 0%, rgba(111, 51, 13, 0.2), transparent 45%),
+            radial-gradient(ellipse 70% 50% at 50% 100%, rgba(185, 106, 52, 0.15), transparent 50%),
             url('{{ asset('images.jpg') }}') center center / cover no-repeat fixed;
         z-index: -2;
     }
@@ -56,7 +56,7 @@
         content: "";
         position: fixed;
         inset: 0;
-        background: linear-gradient(165deg, rgba(7, 11, 18, 0.82) 0%, rgba(7, 11, 18, 0.72) 40%, rgba(7, 11, 18, 0.88) 100%);
+        background: linear-gradient(165deg, rgba(45, 25, 15, 0.82) 0%, rgba(45, 25, 15, 0.72) 40%, rgba(45, 25, 15, 0.88) 100%);
         z-index: -1;
     }
 
@@ -150,12 +150,12 @@
 
     .welcome-nav a.primary {
         background: var(--welcome-accent-soft);
-        border-color: rgba(56, 189, 248, 0.35);
-        color: #e0f2fe !important;
+        border-color: rgba(139, 69, 19, 0.45);
+        color: #fff2e7 !important;
     }
 
     .welcome-nav a.primary:hover {
-        background: rgba(56, 189, 248, 0.28);
+        background: rgba(139, 69, 19, 0.35);
     }
 
     .welcome-main {
@@ -382,20 +382,6 @@
             <div class="welcome-clock-meta">Philippines standard time</div>
         </div>
 
-        <div class="welcome-actions">
-            <a href="{{ route('timein.index') }}" class="welcome-action welcome-action--in">
-                <span class="welcome-action-icon" aria-hidden="true"><i class="fa fa-sign-in-alt"></i></span>
-                <h2>Time in</h2>
-                <p>Clock in when you start your shift or session.</p>
-                <span class="welcome-action-cta">Start <i class="fa fa-arrow-right" style="font-size: 0.75rem;"></i></span>
-            </a>
-            <a href="{{ route('timeout.index') }}" class="welcome-action welcome-action--out">
-                <span class="welcome-action-icon" aria-hidden="true"><i class="fa fa-sign-out-alt"></i></span>
-                <h2>Time out</h2>
-                <p>Clock out when your work period is complete.</p>
-                <span class="welcome-action-cta">Finish <i class="fa fa-arrow-right" style="font-size: 0.75rem;"></i></span>
-            </a>
-        </div>
     </main>
 
     <footer class="welcome-footer">

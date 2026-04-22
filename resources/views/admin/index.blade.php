@@ -3,6 +3,27 @@
 @section('css')
 <!--Chartist Chart CSS -->
 <link rel="stylesheet" href="{{ URL::asset('plugins/chartist/css/chartist.min.css') }}">
+<style>
+    .mini-stat.stat-brown {
+        background: linear-gradient(145deg, #8B4513 0%, #6f330d 100%) !important;
+        border: 1px solid #6f330d;
+    }
+
+    .mini-stat.stat-brown .text-white-50,
+    .mini-stat.stat-brown p,
+    .mini-stat.stat-brown a {
+        color: rgba(255, 244, 234, 0.85) !important;
+    }
+
+    #chart-with-area .ct-series-a .ct-line,
+    #chart-with-area .ct-series-a .ct-point {
+        stroke: #8B4513 !important;
+    }
+
+    #chart-with-area .ct-series-a .ct-area {
+        fill: rgba(139, 69, 19, 0.22) !important;
+    }
+</style>
 @endsection
 
 @section('breadcrumb')
@@ -17,7 +38,7 @@
 @section('content')
                    <div class="row">
                             <div class="col-xl-3 col-md-6">
-                                <div class="card mini-stat bg-primary text-white">
+                                <div class="card mini-stat stat-brown text-white">
                                     <div class="card-body">
                                         <div class="mb-4">
                                             <div class="float-left mini-stat-img mr-4">
@@ -38,7 +59,7 @@
                                 </div>
                             </div>
                             <div class="col-xl-3 col-md-6">
-                                <div class="card mini-stat bg-primary text-white">
+                                <div class="card mini-stat stat-brown text-white">
                                     <div class="card-body">
                                         <div class="mb-4">
                                             <div class="float-left mini-stat-img mr-4">
@@ -46,7 +67,7 @@
                                             </div>
                                             <h6  class="font-16 text-uppercase mt-0 text-white-50" >On Time <br> Percentage</h6>
                                             <h4 class="font-500">{{$data[3]}} %<i class="text-danger ml-2"></i></h4>
-                                            <span class="peity-donut" data-peity='{ "fill": ["#02a499", "#f2f2f2"], "innerRadius": 28, "radius": 32 }' data-width="72" data-height="72">{{$data[3]}}/{{count($data)}}</span>
+                                            <span class="peity-donut" data-peity='{ "fill": ["#8B4513", "#ead8cb"], "innerRadius": 28, "radius": 32 }' data-width="72" data-height="72">{{$data[3]}}/{{count($data)}}</span>
                                                        
                                         </div>
                                         <div class="pt-2">
@@ -60,7 +81,7 @@
                                 </div>
                             </div>
                             <div class="col-xl-3 col-md-6">
-                                <div class="card mini-stat bg-primary text-white">
+                                <div class="card mini-stat stat-brown text-white">
                                     <div class="card-body">
                                         <div class="mb-4">
                                             <div class="float-left mini-stat-img mr-4">
@@ -68,7 +89,7 @@
                                             </div>
                                             <h5 class="font-16 text-uppercase mt-0 text-white-50">On Time <br> Today</h5>
                                             <h4 class="font-500">{{$data[1]}} <i class=" text-success ml-2"></i></h4>
-                                            <span class="peity-donut" data-peity='{ "fill": ["#02a499", "#f2f2f2"], "innerRadius": 28, "radius": 32 }' data-width="72" data-height="72">{{$data[1]}}/{{count($data)}}</span>
+                                            <span class="peity-donut" data-peity='{ "fill": ["#8B4513", "#ead8cb"], "innerRadius": 28, "radius": 32 }' data-width="72" data-height="72">{{$data[1]}}/{{count($data)}}</span>
                                              
                                         </div>
                                         <div class="pt-2">
@@ -82,7 +103,7 @@
                                 </div>
                             </div>
                             <div class="col-xl-3 col-md-6">
-                                <div class="card mini-stat bg-primary text-white">
+                                <div class="card mini-stat stat-brown text-white">
                                     <div class="card-body">
                                         <div class="mb-4">
                                             <div class="float-left mini-stat-img mr-4">
@@ -90,7 +111,7 @@
                                             </div>
                                             <h5 class="font-16 text-uppercase mt-0 text-white-50">Late <br> Today</h5>
                                             <h4 class="font-500">{{$data[2]}}<i class=" text-success ml-2"></i></h4>
-                                            <span class="peity-donut" data-peity='{ "fill": ["#02a499", "#f2f2f2"], "innerRadius": 28, "radius": 32 }' data-width="72" data-height="72">{{$data[2]}}/{{count($data)}}</span>
+                                            <span class="peity-donut" data-peity='{ "fill": ["#8B4513", "#ead8cb"], "innerRadius": 28, "radius": 32 }' data-width="72" data-height="72">{{$data[2]}}/{{count($data)}}</span>
                                              
                                         </div>
                                         <div class="pt-2">
@@ -124,7 +145,7 @@
                                                             <p class="text-muted mb-4">This month</p>
                                                             <h4>{{ $data[4] }}</h4>
                                                             <p class="text-muted mb-5">Total attendance records this month</p>
-                                                            <span class="peity-donut" data-peity='{ "fill": ["#02a499", "#f2f2f2"], "innerRadius": 28, "radius": 32 }' data-width="72" data-height="72">{{$data[3]}}/{{count($data)}}</span>
+                                                            <span class="peity-donut" data-peity='{ "fill": ["#8B4513", "#ead8cb"], "innerRadius": 28, "radius": 32 }' data-width="72" data-height="72">{{$data[3]}}/{{count($data)}}</span>
                                                         </div>
                                                     </div>
                                                     <div class="col-md-6">
@@ -132,7 +153,7 @@
                                                             <p class="text-muted mb-4">Last month</p>
                                                             <h4>{{ $data[5] }}</h4>
                                                             <p class="text-muted mb-5">Total attendance records last month</p>
-                                                            <span class="peity-donut" data-peity='{ "fill": ["#02a499", "#f2f2f2"], "innerRadius": 28, "radius": 32 }' data-width="72" data-height="72">3/5</span>
+                                                            <span class="peity-donut" data-peity='{ "fill": ["#8B4513", "#ead8cb"], "innerRadius": 28, "radius": 32 }' data-width="72" data-height="72">3/5</span>
                                                         </div>
                                                     </div>
                                                 </div>

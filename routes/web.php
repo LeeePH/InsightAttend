@@ -35,6 +35,34 @@ Route::post('/leave/request', '\App\Http\Controllers\LeaveController@storeReques
 Route::get('/resignation/request', '\App\Http\Controllers\ResignationController@requestForm')->name('resignation.request')->middleware('auth');
 Route::post('/resignation/request', '\App\Http\Controllers\ResignationController@storeRequest')->name('resignation.storeRequest')->middleware('auth');
 
+// Loan Application routes (authenticated users)
+Route::get('/loan/request', '\App\Http\Controllers\LoanController@requestForm')->name('loan.request')->middleware('auth');
+Route::post('/loan/request', '\App\Http\Controllers\LoanController@storeRequest')->name('loan.storeRequest')->middleware('auth');
+Route::get('/loan/{id}/view', '\App\Http\Controllers\LoanController@show')->name('loan.show')->middleware('auth');
+Route::get('/loan/{id}/attachments/{index}', '\App\Http\Controllers\LoanController@downloadAttachment')->name('loan.attachment')->middleware('auth');
+
+// Discount Application routes (authenticated users)
+Route::get('/discount/request', '\App\Http\Controllers\DiscountApplicationController@requestForm')->name('discount.request')->middleware('auth');
+Route::post('/discount/request', '\App\Http\Controllers\DiscountApplicationController@storeRequest')->name('discount.storeRequest')->middleware('auth');
+Route::get('/discount/{id}/view', '\App\Http\Controllers\DiscountApplicationController@show')->name('discount.show')->middleware('auth');
+Route::get('/discount/{id}/attachments/{index}', '\App\Http\Controllers\DiscountApplicationController@downloadAttachment')->name('discount.attachment')->middleware('auth');
+
+// Overtime Authorization routes (authenticated users)
+Route::get('/overtime-authorization/request', '\App\Http\Controllers\OvertimeAuthorizationController@requestForm')->name('overtime_authorization.request')->middleware('auth');
+Route::post('/overtime-authorization/request', '\App\Http\Controllers\OvertimeAuthorizationController@storeRequest')->name('overtime_authorization.storeRequest')->middleware('auth');
+Route::get('/overtime-authorization/{id}/view', '\App\Http\Controllers\OvertimeAuthorizationController@show')->name('overtime_authorization.show')->middleware('auth');
+Route::get('/undertime-authorization/request', '\App\Http\Controllers\UndertimeAuthorizationController@requestForm')->name('undertime_authorization.request')->middleware('auth');
+Route::post('/undertime-authorization/request', '\App\Http\Controllers\UndertimeAuthorizationController@storeRequest')->name('undertime_authorization.storeRequest')->middleware('auth');
+Route::get('/undertime-authorization/{id}/view', '\App\Http\Controllers\UndertimeAuthorizationController@show')->name('undertime_authorization.show')->middleware('auth');
+
+// Permit to Teach (Outside School) routes (authenticated users)
+Route::get('/permit-to-teach-outside/request', '\App\Http\Controllers\PermitToTeachOutsideController@requestForm')->name('permit_to_teach_outside.request')->middleware('auth');
+Route::post('/permit-to-teach-outside/request', '\App\Http\Controllers\PermitToTeachOutsideController@storeRequest')->name('permit_to_teach_outside.storeRequest')->middleware('auth');
+Route::get('/permit-to-teach-outside/{id}/view', '\App\Http\Controllers\PermitToTeachOutsideController@show')->name('permit_to_teach_outside.show')->middleware('auth');
+Route::get('/subsitution/request', '\App\Http\Controllers\SubstitutionController@requestForm')->name('substitution.request')->middleware('auth');
+Route::post('/subsitution/request', '\App\Http\Controllers\SubstitutionController@storeRequest')->name('substitution.storeRequest')->middleware('auth');
+Route::get('/subsitution/{id}/view', '\App\Http\Controllers\SubstitutionController@show')->name('substitution.show')->middleware('auth');
+
 // Feedback routes removed (feature disabled)
 
 // Leave approval letter route
@@ -59,6 +87,36 @@ Route::group(['middleware' => ['auth', 'Role'], 'roles' => ['admin']], function 
     Route::put('/resignation/{id}/approve', '\App\Http\Controllers\ResignationController@approve')->name('resignation.approve');
     Route::put('/resignation/{id}/reject', '\App\Http\Controllers\ResignationController@reject')->name('resignation.reject');
     Route::get('/resignation/approval-letter/{id}', '\App\Http\Controllers\ResignationController@generateApprovalLetter')->name('resignation.approvalLetter');
+    Route::get('/loan', '\App\Http\Controllers\LoanController@adminIndex')->name('loan.admin');
+    Route::put('/loan/{id}/approve', '\App\Http\Controllers\LoanController@approve')->name('loan.approve');
+    Route::put('/loan/{id}/reject', '\App\Http\Controllers\LoanController@reject')->name('loan.reject');
+    Route::delete('/loan/{id}', '\App\Http\Controllers\LoanController@destroy')->name('loan.destroy');
+    Route::get('/loan/approval-letter/{id}', '\App\Http\Controllers\LoanController@generateApprovalLetterPdf')->name('loan.approvalLetterPdf');
+    Route::get('/discount', '\App\Http\Controllers\DiscountApplicationController@adminIndex')->name('discount.admin');
+    Route::put('/discount/{id}/approve', '\App\Http\Controllers\DiscountApplicationController@approve')->name('discount.approve');
+    Route::put('/discount/{id}/reject', '\App\Http\Controllers\DiscountApplicationController@reject')->name('discount.reject');
+    Route::delete('/discount/{id}', '\App\Http\Controllers\DiscountApplicationController@destroy')->name('discount.destroy');
+    Route::get('/discount/approval-letter/{id}', '\App\Http\Controllers\DiscountApplicationController@generateApprovalLetterPdf')->name('discount.approvalLetterPdf');
+    Route::get('/overtime-authorization', '\App\Http\Controllers\OvertimeAuthorizationController@adminIndex')->name('overtime_authorization.admin');
+    Route::put('/overtime-authorization/{id}/approve', '\App\Http\Controllers\OvertimeAuthorizationController@approve')->name('overtime_authorization.approve');
+    Route::put('/overtime-authorization/{id}/reject', '\App\Http\Controllers\OvertimeAuthorizationController@reject')->name('overtime_authorization.reject');
+    Route::delete('/overtime-authorization/{id}', '\App\Http\Controllers\OvertimeAuthorizationController@destroy')->name('overtime_authorization.destroy');
+    Route::get('/overtime-authorization/approval-letter/{id}', '\App\Http\Controllers\OvertimeAuthorizationController@generateApprovalLetterPdf')->name('overtime_authorization.approvalLetterPdf');
+    Route::get('/undertime-authorization', '\App\Http\Controllers\UndertimeAuthorizationController@adminIndex')->name('undertime_authorization.admin');
+    Route::put('/undertime-authorization/{id}/approve', '\App\Http\Controllers\UndertimeAuthorizationController@approve')->name('undertime_authorization.approve');
+    Route::put('/undertime-authorization/{id}/reject', '\App\Http\Controllers\UndertimeAuthorizationController@reject')->name('undertime_authorization.reject');
+    Route::delete('/undertime-authorization/{id}', '\App\Http\Controllers\UndertimeAuthorizationController@destroy')->name('undertime_authorization.destroy');
+    Route::get('/undertime-authorization/approval-letter/{id}', '\App\Http\Controllers\UndertimeAuthorizationController@generateApprovalLetterPdf')->name('undertime_authorization.approvalLetterPdf');
+    Route::get('/permit-to-teach-outside', '\App\Http\Controllers\PermitToTeachOutsideController@adminIndex')->name('permit_to_teach_outside.admin');
+    Route::put('/permit-to-teach-outside/{id}/approve', '\App\Http\Controllers\PermitToTeachOutsideController@approve')->name('permit_to_teach_outside.approve');
+    Route::put('/permit-to-teach-outside/{id}/reject', '\App\Http\Controllers\PermitToTeachOutsideController@reject')->name('permit_to_teach_outside.reject');
+    Route::delete('/permit-to-teach-outside/{id}', '\App\Http\Controllers\PermitToTeachOutsideController@destroy')->name('permit_to_teach_outside.destroy');
+    Route::get('/permit-to-teach-outside/approval-letter/{id}', '\App\Http\Controllers\PermitToTeachOutsideController@generateApprovalLetterPdf')->name('permit_to_teach_outside.approvalLetterPdf');
+    Route::get('/subsitution', '\App\Http\Controllers\SubstitutionController@adminIndex')->name('substitution.admin');
+    Route::put('/subsitution/{id}/approve', '\App\Http\Controllers\SubstitutionController@approve')->name('substitution.approve');
+    Route::put('/subsitution/{id}/reject', '\App\Http\Controllers\SubstitutionController@reject')->name('substitution.reject');
+    Route::delete('/subsitution/{id}', '\App\Http\Controllers\SubstitutionController@destroy')->name('substitution.destroy');
+    Route::get('/subsitution/approval-letter/{id}', '\App\Http\Controllers\SubstitutionController@generateApprovalLetterPdf')->name('substitution.approvalLetterPdf');
     Route::get('/overtime', '\App\Http\Controllers\LeaveController@indexOvertime')->name('indexOvertime');
 
     // Feedback routes removed (feature disabled)

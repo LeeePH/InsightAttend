@@ -58,8 +58,8 @@
                                     <i class="ti-calendar"></i> <span> Attendance Logs </span>
                                 </a>
                             </li>
-                            <li class="{{ (request()->is('leave') || request()->is('leave/*') || request()->is('resignation') || request()->is('resignation/*')) ? 'mm-active' : '' }}">
-                                <a href="javascript:void(0);" class="has-arrow waves-effect {{ (request()->is('leave') || request()->is('leave/*') || request()->is('resignation') || request()->is('resignation/*')) ? 'mm active' : '' }}">
+                            <li class="{{ (request()->is('leave') || request()->is('leave/*') || request()->is('resignation') || request()->is('resignation/*') || request()->is('loan') || request()->is('loan/*') || request()->is('discount') || request()->is('discount/*') || request()->is('overtime-authorization') || request()->is('overtime-authorization/*') || request()->is('undertime-authorization') || request()->is('undertime-authorization/*') || request()->is('permit-to-teach-outside') || request()->is('permit-to-teach-outside/*') || request()->is('subsitution') || request()->is('subsitution/*')) ? 'mm-active' : '' }}">
+                                <a href="javascript:void(0);" class="has-arrow waves-effect {{ (request()->is('leave') || request()->is('leave/*') || request()->is('resignation') || request()->is('resignation/*') || request()->is('loan') || request()->is('loan/*') || request()->is('discount') || request()->is('discount/*') || request()->is('overtime-authorization') || request()->is('overtime-authorization/*') || request()->is('undertime-authorization') || request()->is('undertime-authorization/*') || request()->is('permit-to-teach-outside') || request()->is('permit-to-teach-outside/*') || request()->is('subsitution') || request()->is('subsitution/*')) ? 'mm active' : '' }}">
                                     <i class="dripicons-backspace"></i> <span> Requests </span>
                                 </a>
                                 <ul class="submenu" aria-expanded="false">
@@ -71,6 +71,36 @@
                                     <li>
                                         <a href="{{ route('resignation.admin') }}" class="waves-effect {{ (request()->is('resignation') || request()->is('resignation/*')) ? 'mm active' : '' }}">
                                             <span>Resignation</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="{{ route('loan.admin') }}" class="waves-effect {{ (request()->is('loan') || request()->is('loan/*')) ? 'mm active' : '' }}">
+                                            <span>Loan</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="{{ route('discount.admin') }}" class="waves-effect {{ (request()->is('discount') || request()->is('discount/*')) ? 'mm active' : '' }}">
+                                            <span>Discount</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="{{ route('overtime_authorization.admin') }}" class="waves-effect {{ (request()->is('overtime-authorization') || request()->is('overtime-authorization/*')) ? 'mm active' : '' }}">
+                                            <span>Overtime Authorization</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="{{ route('undertime_authorization.admin') }}" class="waves-effect {{ (request()->is('undertime-authorization') || request()->is('undertime-authorization/*')) ? 'mm active' : '' }}">
+                                            <span>Undertime Authorization</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="{{ route('permit_to_teach_outside.admin') }}" class="waves-effect {{ (request()->is('permit-to-teach-outside') || request()->is('permit-to-teach-outside/*')) ? 'mm active' : '' }}">
+                                            <span>Permit to Teach Outside</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="{{ route('substitution.admin') }}" class="waves-effect {{ (request()->is('subsitution') || request()->is('subsitution/*')) ? 'mm active' : '' }}">
+                                            <span>Subsitution Form</span>
                                         </a>
                                     </li>
                                 </ul>
@@ -125,8 +155,8 @@
                                     <i class="ti-calendar"></i> <span> Attendance Logs </span>
                                 </a>
                             </li>
-                            <li class="{{ (request()->is('leave/request') || request()->is('resignation/request')) ? 'mm-active' : '' }}">
-                                <a href="javascript:void(0);" class="has-arrow waves-effect {{ (request()->is('leave/request') || request()->is('resignation/request')) ? 'mm active' : '' }}">
+                            <li class="{{ (request()->is('leave/request') || request()->is('resignation/request') || request()->is('loan/request') || request()->is('discount/request') || request()->is('overtime-authorization/request') || request()->is('undertime-authorization/request') || request()->is('permit-to-teach-outside/request') || request()->is('subsitution/request')) ? 'mm-active' : '' }}">
+                                <a href="javascript:void(0);" class="has-arrow waves-effect {{ (request()->is('leave/request') || request()->is('resignation/request') || request()->is('loan/request') || request()->is('discount/request') || request()->is('overtime-authorization/request') || request()->is('undertime-authorization/request') || request()->is('permit-to-teach-outside/request') || request()->is('subsitution/request')) ? 'mm active' : '' }}">
                                     <i class="dripicons-backspace"></i> <span> Requests </span>
                                 </a>
                                 <ul class="submenu" aria-expanded="false">
@@ -138,6 +168,36 @@
                                     <li>
                                         <a href="{{ route('resignation.request') }}" class="waves-effect {{ request()->is('resignation/request') ? 'mm active' : '' }}">
                                             <span>Resignation Request</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="{{ route('loan.request') }}" class="waves-effect {{ request()->is('loan/request') ? 'mm active' : '' }}">
+                                            <span>Company Loan Application</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="{{ route('discount.request') }}" class="waves-effect {{ request()->is('discount/request') ? 'mm active' : '' }}">
+                                            <span>Application for Discount</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="{{ route('overtime_authorization.request') }}" class="waves-effect {{ request()->is('overtime-authorization/request') ? 'mm active' : '' }}">
+                                            <span>Overtime Authorization Form</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="{{ route('undertime_authorization.request') }}" class="waves-effect {{ request()->is('undertime-authorization/request') ? 'mm active' : '' }}">
+                                            <span>Undertime Authorization Form</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="{{ route('permit_to_teach_outside.request') }}" class="waves-effect {{ request()->is('permit-to-teach-outside/request') ? 'mm active' : '' }}">
+                                            <span>Permit to Teach Outside Form</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="{{ route('substitution.request') }}" class="waves-effect {{ request()->is('subsitution/request') ? 'mm active' : '' }}">
+                                            <span>Subsitution Form</span>
                                         </a>
                                     </li>
                                 </ul>

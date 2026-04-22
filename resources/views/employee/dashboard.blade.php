@@ -7,14 +7,14 @@ use Illuminate\Support\Str;
 @section('css')
 <style>
     :root {
-        --theme-bg: #f2f5fa;
+        --theme-bg: #f8f1eb;
         --theme-card: #ffffff;
-        --theme-text: #1f2a3d;
-        --theme-muted: #6b7587;
-        --theme-border: #dde3ed;
-        --theme-accent: #2e3f5c;
-        --theme-accent-soft: #e8edf6;
-        --theme-chip: #eef2f8;
+        --theme-text: #3e2412;
+        --theme-muted: #7b5a45;
+        --theme-border: #e2cdbd;
+        --theme-accent: #8B4513;
+        --theme-accent-soft: #f3e4d7;
+        --theme-chip: #f7ebe2;
     }
 
     body {
