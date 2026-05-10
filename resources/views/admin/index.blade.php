@@ -29,9 +29,6 @@
 @section('breadcrumb')
 <div class="col-sm-6 text-left" >
      <h4 class="page-title">Dashboard</h4>
-     <ol class="breadcrumb">
-         <li class="breadcrumb-item active">Welcome to Attendance Management System</li>
-     </ol>
 </div>
 @endsection
 
@@ -45,7 +42,7 @@
                                                 <span class="ti-id-badge" style="font-size: 20px"></span>
                                             </div>
                                             <h5 class="font-16 text-uppercase mt-0 text-white-50">Total <br> Employees</h5>
-                                            <h4 class="font-500">{{$data[0]}} </h4>
+                                            <h4 class="font-500 text-white-50">{{$data[0]}} </h4>
                                             <span class="ti-user" style="font-size: 71px"></span>
                                               
                                         </div>
@@ -66,7 +63,7 @@
                                                 <i class="ti-alarm-clock" style="font-size: 20px"></i>
                                             </div>
                                             <h6  class="font-16 text-uppercase mt-0 text-white-50" >On Time <br> Percentage</h6>
-                                            <h4 class="font-500">{{$data[3]}} %<i class="text-danger ml-2"></i></h4>
+                                            <h4 class="font-500 text-white-50">{{$data[3]}} %<i class="text-danger ml-2"></i></h4>
                                             <span class="peity-donut" data-peity='{ "fill": ["#8B4513", "#ead8cb"], "innerRadius": 28, "radius": 32 }' data-width="72" data-height="72">{{$data[3]}}/{{count($data)}}</span>
                                                        
                                         </div>
@@ -88,7 +85,7 @@
                                                 <i class=" ti-check-box " style="font-size: 20px"></i>
                                             </div>
                                             <h5 class="font-16 text-uppercase mt-0 text-white-50">On Time <br> Today</h5>
-                                            <h4 class="font-500">{{$data[1]}} <i class=" text-success ml-2"></i></h4>
+                                            <h4 class="font-500 text-white-50">{{$data[1]}} <i class=" text-success ml-2"></i></h4>
                                             <span class="peity-donut" data-peity='{ "fill": ["#8B4513", "#ead8cb"], "innerRadius": 28, "radius": 32 }' data-width="72" data-height="72">{{$data[1]}}/{{count($data)}}</span>
                                              
                                         </div>
@@ -110,7 +107,7 @@
                                                 <i class="ti-alert" style="font-size: 20px"></i>
                                             </div>
                                             <h5 class="font-16 text-uppercase mt-0 text-white-50">Late <br> Today</h5>
-                                            <h4 class="font-500">{{$data[2]}}<i class=" text-success ml-2"></i></h4>
+                                            <h4 class="font-500 text-white-50">{{$data[2]}}<i class=" text-success ml-2"></i></h4>
                                             <span class="peity-donut" data-peity='{ "fill": ["#8B4513", "#ead8cb"], "innerRadius": 28, "radius": 32 }' data-width="72" data-height="72">{{$data[2]}}/{{count($data)}}</span>
                                              
                                         </div>
