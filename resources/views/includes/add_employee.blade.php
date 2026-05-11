@@ -56,6 +56,16 @@
                                     </select>
                                     <div class="add-emp-err text-danger small mt-1" data-for="department_id" role="alert" style="display:none;"></div>
                                 </div>
+                                <div class="form-group">
+                                    <label for="add_emp_schedule_dept">Scheduling department (timetable)</label>
+                                    <select class="form-control" id="add_emp_schedule_dept" name="schedule_department_key">
+                                        <option value="">— Infer from department name —</option>
+                                        <option value="IT">IT</option>
+                                        <option value="EDUC">EDUC</option>
+                                        <option value="SHTM">SHTM</option>
+                                    </select>
+                                    <small class="text-muted d-block mt-1">Used for secretary-scoped scheduling. Set explicitly if the name does not match IT, EDUC, or SHTM.</small>
+                                </div>
 
                                 
                                 <div class="form-group">
@@ -69,6 +79,38 @@
                                 <div class="form-group">
                                     <label for="add_emp_phone" class="col-sm-3 control-label">Phone (SMS)</label>
                                     <input type="text" class="form-control" id="add_emp_phone" name="phone" placeholder="+639xxxxxxxxx">
+                                </div>
+                                <div class="form-group">
+                                    <label for="add_emp_date_hired">Date Hired</label>
+                                    <input type="date" class="form-control" id="add_emp_date_hired" name="date_hired">
+                                </div>
+                                <div class="form-group">
+                                    <label for="add_emp_employment_type">Employment Status</label>
+                                    <select class="form-control" id="add_emp_employment_type" name="employment_type">
+                                        <option value="">- Select -</option>
+                                        <option value="full_time">Full-time</option>
+                                        <option value="part_time">Part-time</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="add_emp_skills">Skills & Expertise</label>
+                                    <textarea class="form-control" id="add_emp_skills" name="skills" rows="3" placeholder="One skill per line"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="add_emp_achievements">Achievements</label>
+                                    <textarea class="form-control" id="add_emp_achievements" name="achievements" rows="3" placeholder="One achievement per line"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="add_emp_emergency_name">Emergency Contact Name</label>
+                                    <input type="text" class="form-control" id="add_emp_emergency_name" name="emergency_contact_name">
+                                </div>
+                                <div class="form-group">
+                                    <label for="add_emp_emergency_relationship">Emergency Contact Relationship</label>
+                                    <input type="text" class="form-control" id="add_emp_emergency_relationship" name="emergency_contact_relationship">
+                                </div>
+                                <div class="form-group">
+                                    <label for="add_emp_emergency_phone">Emergency Contact Phone</label>
+                                    <input type="text" class="form-control" id="add_emp_emergency_phone" name="emergency_contact_phone">
                                 </div>
                                 <div class="form-group">
                                     <label for="add_emp_password" class="col-sm-3 control-label">Password</label>

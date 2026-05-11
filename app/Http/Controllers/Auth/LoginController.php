@@ -43,13 +43,14 @@ class LoginController extends Controller
      */
     protected function authenticated($request, $user)
     {
-        // Check if user has any roles
-        $firstRole = $user->roles()->first();
-        
-        if ($firstRole && $firstRole->slug === 'admin') {
+        if ($user->hasRole('admin')) {
             return redirect('/admin');
-        } else {
-            return redirect('/employee/dashboard');
         }
+
+        if ($user->hasAnyRole(['hr', 'secretary'])) {
+            return redirect()->route('employee_timetable.index');
+        }
+
+        return redirect('/employee/dashboard');
     }
 }

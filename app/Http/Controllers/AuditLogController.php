@@ -17,10 +17,6 @@ class AuditLogController extends Controller
             $query->where('user_id', $request->input('user_id'));
         }
 
-        if ($request->filled('method')) {
-            $query->where('method', strtoupper($request->input('method')));
-        }
-
         if ($request->filled('role')) {
             $query->where('role_slug', $request->input('role'));
         }
@@ -30,8 +26,7 @@ class AuditLogController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('user_name', 'like', '%' . $search . '%')
                     ->orWhere('route_name', 'like', '%' . $search . '%')
-                    ->orWhere('description', 'like', '%' . $search . '%')
-                    ->orWhere('url', 'like', '%' . $search . '%');
+                    ->orWhere('description', 'like', '%' . $search . '%');
             });
         }
 

@@ -6,18 +6,18 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
     :root {
-        --welcome-bg-deep: #030c1a;
-        --welcome-surface: rgba(255, 255, 255, 0.05);
-        --welcome-surface-hover: rgba(255, 255, 255, 0.09);
-        --welcome-border: rgba(255, 255, 255, 0.09);
-        --welcome-text: #e8edf5;
-        --welcome-muted: rgba(232, 237, 245, 0.55);
-        --welcome-accent: #1a4d96;
-        --welcome-accent-soft: rgba(26, 77, 150, 0.28);
-        --welcome-in: #2260b8;
-        --welcome-in-soft: rgba(34, 96, 184, 0.2);
+        --welcome-bg-deep: #f8f1eb;
+        --welcome-surface: rgba(255, 255, 255, 0.64);
+        --welcome-surface-hover: rgba(255, 255, 255, 0.88);
+        --welcome-border: rgba(139, 69, 19, 0.18);
+        --welcome-text: #3e2412;
+        --welcome-muted: rgba(92, 57, 31, 0.68);
+        --welcome-accent: #8b4513;
+        --welcome-accent-soft: rgba(139, 69, 19, 0.14);
+        --welcome-in: #a0522d;
+        --welcome-in-soft: rgba(160, 82, 45, 0.16);
         --welcome-radius: 20px;
-        --welcome-shadow: 0 24px 80px rgba(0, 0, 0, 0.65);
+        --welcome-shadow: 0 24px 80px rgba(78, 49, 26, 0.18);
         --welcome-font: "DM Sans", system-ui, -apple-system, sans-serif;
         --welcome-mono: "JetBrains Mono", ui-monospace, monospace;
         --gallery-height: clamp(250px, 34vh, 310px);
@@ -37,10 +37,9 @@
 
         /* Static gradient background — no carousel */
         background:
-            radial-gradient(ellipse 130% 90% at 15% -10%, rgba(26, 77, 150, 0.55) 0%, transparent 55%),
-            radial-gradient(ellipse 100% 80% at 90% 110%, rgba(16, 48, 100, 0.5) 0%, transparent 55%),
-            radial-gradient(ellipse 80% 60% at 50% 50%, rgba(10, 28, 68, 0.4) 0%, transparent 70%),
-            linear-gradient(155deg, #050f22 0%, #07142e 35%, #040d1e 65%, #020810 100%) !important;
+            radial-gradient(ellipse 120% 90% at 10% -10%, rgba(139, 69, 19, 0.14) 0%, transparent 54%),
+            radial-gradient(ellipse 95% 72% at 92% 108%, rgba(111, 78, 55, 0.16) 0%, transparent 58%),
+            linear-gradient(155deg, #fbf5ef 0%, #f4e7da 35%, #efe0d2 65%, #ead7c6 100%) !important;
     }
 
     .welcome-page {
@@ -56,7 +55,7 @@
         padding: clamp(8px, 2vh, 18px) clamp(16px, 4vw, 48px) clamp(10px, 2vh, 18px);
     }
 
-    /* ── Header ── */
+    /* ── Header (above main content so nav links stay clickable) ── */
     .welcome-header {
         display: flex;
         align-items: center;
@@ -66,6 +65,8 @@
         margin-bottom: 0;
         width: 100%;
         min-height: 0;
+        position: relative;
+        z-index: 200;
     }
 
     .welcome-nav {
@@ -73,6 +74,8 @@
         align-items: center;
         flex-wrap: wrap;
         gap: 8px;
+        position: relative;
+        z-index: 201;
     }
 
     .welcome-nav a {
@@ -85,6 +88,10 @@
         border: 1px solid transparent;
         background: transparent;
         transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+        position: relative;
+        z-index: 202;
+        cursor: pointer;
+        pointer-events: auto;
     }
 
     .welcome-nav a:hover {
@@ -114,6 +121,8 @@
         max-width: 1280px;
         margin: 0 auto;
         min-height: 0;
+        position: relative;
+        z-index: 1;
     }
 
     /* ══════════════════════════════════════
@@ -146,8 +155,8 @@
         height: clamp(68px, 8vh, 88px);
         border-radius: 20px;
         object-fit: cover;
-        border: 2px solid rgba(255,255,255,0.15);
-        box-shadow: 0 8px 32px rgba(0,0,0,0.55);
+        border: 2px solid rgba(139,69,19,0.16);
+        box-shadow: 0 14px 34px rgba(78, 49, 26, 0.16);
     }
 
     .welcome-brand-text {
@@ -159,7 +168,7 @@
         font-weight: 600;
         letter-spacing: 0.18em;
         text-transform: uppercase;
-        color: rgba(180, 210, 255, 0.7);
+        color: rgba(123, 90, 69, 0.9);
         margin: 0 0 6px;
     }
 
@@ -169,8 +178,8 @@
         letter-spacing: -0.02em;
         margin: 0;
         line-height: 1.2;
-        color: #ffffff;
-        text-shadow: 0 2px 16px rgba(0,0,0,0.5);
+        color: #4c2d17;
+        text-shadow: none;
     }
 
     /* Collage-style gallery */
@@ -186,9 +195,9 @@
         border-radius: 16px;
         overflow: hidden;
         box-shadow:
-            0 0 0 1px rgba(255,255,255,0.07),
-            0 20px 56px rgba(0, 0, 0, 0.6),
-            0 6px 20px rgba(10, 40, 100, 0.4);
+            0 0 0 1px rgba(139,69,19,0.08),
+            0 20px 56px rgba(78, 49, 26, 0.16),
+            0 6px 20px rgba(139, 69, 19, 0.12);
         position: relative;
     }
 
@@ -197,7 +206,7 @@
         content: '';
         position: absolute;
         inset: 0;
-        background: linear-gradient(145deg, rgba(26, 77, 150, 0.10) 0%, transparent 55%);
+        background: linear-gradient(145deg, rgba(139, 69, 19, 0.12) 0%, transparent 55%);
         pointer-events: none;
         z-index: 3;
         border-radius: 16px;
@@ -206,14 +215,14 @@
     .gallery-cell {
         position: relative;
         overflow: hidden;
-        background: rgba(10, 22, 50, 0.85);
+        background: rgba(95, 62, 38, 0.12);
     }
 
     .gallery-cell::before {
         content: '';
         position: absolute;
         inset: 0;
-        background: linear-gradient(135deg, rgba(16, 44, 100, 0.4) 0%, rgba(6, 18, 50, 0.2) 100%);
+        background: linear-gradient(135deg, rgba(76, 45, 23, 0.18) 0%, rgba(139, 69, 19, 0.08) 100%);
         z-index: 1;
     }
 
@@ -225,7 +234,7 @@
         position: relative;
         z-index: 2;
         transition: transform 0.55s ease, filter 0.55s ease;
-        filter: brightness(0.85) saturate(0.88);
+        filter: brightness(0.92) saturate(0.95);
     }
 
     .gallery-cell:hover img {
@@ -249,7 +258,7 @@
     /* Tagline below gallery */
     .gallery-tagline {
         font-size: 0.78rem;
-        color: white;
+        color: var(--welcome-muted);
         text-align: center;
         letter-spacing: 0.04em;
         margin-top: 2px;
@@ -274,8 +283,8 @@
     .welcome-right .login-card {
         padding: clamp(28px, 5vw, 40px) clamp(28px, 5vw, 36px);
         border-radius: var(--welcome-radius);
-        background: rgba(8, 18, 38, 0.78);
-        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(255, 255, 255, 0.82);
+        border: 1px solid rgba(139, 69, 19, 0.12);
         backdrop-filter: blur(24px);
         -webkit-backdrop-filter: blur(24px);
         box-shadow: var(--welcome-shadow);
@@ -286,7 +295,7 @@
         font-size: 1.55rem;
         font-weight: 700;
         letter-spacing: -0.02em;
-        color: #fff;
+        color: #3e2412;
     }
 
     .welcome-right .login-card .login-lead {
@@ -315,8 +324,8 @@
         height: auto;
         padding: 13px 16px;
         border-radius: 12px;
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        background: rgba(3, 10, 24, 0.6);
+        border: 1px solid rgba(139, 69, 19, 0.14);
+        background: rgba(255, 255, 255, 0.88);
         color: var(--welcome-text);
         font-size: 0.975rem;
         transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
@@ -325,19 +334,52 @@
     }
 
     .welcome-right .form-control::placeholder {
-        color: rgba(200, 215, 240, 0.3);
+        color: rgba(123, 90, 69, 0.55);
     }
 
     .welcome-right .form-control:focus {
         outline: none;
-        border-color: rgba(34, 96, 184, 0.65);
-        box-shadow: 0 0 0 3px rgba(26, 77, 150, 0.22);
-        background: rgba(3, 10, 28, 0.7);
-        color: #fff;
+        border-color: rgba(139, 69, 19, 0.45);
+        box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.14);
+        background: #fff;
+        color: var(--welcome-text);
     }
 
     .welcome-right .form-control.is-invalid {
         border-color: rgba(248, 113, 113, 0.65);
+    }
+
+    .welcome-right .password-field-wrap {
+        position: relative;
+    }
+
+    .welcome-right .password-field-wrap .form-control {
+        padding-right: 48px;
+    }
+
+    .welcome-right .password-toggle {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 36px;
+        height: 36px;
+        border: none;
+        border-radius: 8px;
+        background: rgba(139, 69, 19, 0.08);
+        color: rgba(92, 57, 31, 0.85);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    .welcome-right .password-toggle:hover,
+    .welcome-right .password-toggle:focus {
+        background: rgba(139, 69, 19, 0.15);
+        color: var(--welcome-text);
+        outline: none;
     }
 
     .welcome-right .invalid-feedback {
@@ -364,8 +406,8 @@
         width: 1.1rem;
         height: 1.1rem;
         border-radius: 6px;
-        border: 1px solid rgba(255,255,255,0.12);
-        background: rgba(3, 10, 24, 0.6);
+        border: 1px solid rgba(139,69,19,0.16);
+        background: rgba(255, 255, 255, 0.8);
         cursor: pointer;
         flex-shrink: 0;
     }
@@ -386,14 +428,14 @@
         width: 100%;
         border: none;
         border-radius: 12px;
-        background: linear-gradient(135deg, #1a4d96 0%, #2260b8 100%);
-        color: #e8f0ff !important;
+        background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%);
+        color: #fff7f1 !important;
         font-weight: 700;
         font-size: 0.975rem;
         padding: 14px 22px;
         cursor: pointer;
         transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
-        box-shadow: 0 10px 30px rgba(20, 60, 140, 0.5);
+        box-shadow: 0 10px 30px rgba(139, 69, 19, 0.24);
         letter-spacing: 0.01em;
     }
 
@@ -401,7 +443,7 @@
     .welcome-right .login-submit:focus {
         filter: brightness(1.08);
         transform: translateY(-1px);
-        box-shadow: 0 14px 38px rgba(20, 60, 140, 0.6);
+        box-shadow: 0 14px 38px rgba(139, 69, 19, 0.3);
         outline: none;
     }
 
@@ -419,7 +461,7 @@
         padding-top: 0;
         text-align: center;
         font-size: 0.78rem;
-        color: rgba(180, 200, 240, 0.35);
+        color: rgba(92, 57, 31, 0.52);
     }
 
     .welcome-footer kbd {
@@ -427,9 +469,9 @@
         font-size: 0.7rem;
         padding: 2px 7px;
         border-radius: 5px;
-        background: rgba(255,255,255,0.05);
-        border: 1px solid rgba(255,255,255,0.08);
-        color: rgba(180, 200, 240, 0.45);
+        background: rgba(255,255,255,0.55);
+        border: 1px solid rgba(139,69,19,0.12);
+        color: rgba(92, 57, 31, 0.75);
     }
 
     /* ── Responsive ── */
@@ -473,7 +515,7 @@
         <nav class="welcome-nav top-right links" aria-label="Account">
             @auth
                 @if(auth()->user()->hasRole('admin'))
-                    <a href="{{ url('/admin') }}" class="primary">Admin</a>
+                    <a href="{{ url('/admin') }}" class="primary">Dashboard</a>
                 @endif
                 @if(auth()->user()->hasRole('employee'))
                     <a href="{{ url('/employee/dashboard') }}">Dashboard</a>
@@ -563,10 +605,15 @@
 
                         <div class="form-group">
                             <label for="password" class="col-form-label">{{ __('Password') }}</label>
-                            <input id="password" type="password"
-                                   class="form-control @error('password') is-invalid @enderror"
-                                   name="password" required autocomplete="current-password"
-                                   placeholder="••••••••">
+                            <div class="password-field-wrap">
+                                <input id="password" type="password"
+                                       class="form-control @error('password') is-invalid @enderror"
+                                       name="password" required autocomplete="current-password"
+                                       placeholder="••••••••">
+                                <button type="button" class="password-toggle" id="welcome-password-toggle" aria-label="Show password" title="Show password">
+                                    <i class="fa fa-eye" aria-hidden="true"></i>
+                                </button>
+                            </div>
                             @error('password')
                                 <span class="invalid-feedback" role="alert">
                                     <strong>{{ $message }}</strong>
@@ -600,4 +647,22 @@
 @endsection
 
 @section('script')
+<script>
+(function () {
+    var input = document.getElementById('password');
+    var btn = document.getElementById('welcome-password-toggle');
+    if (!input || !btn) return;
+
+    var icon = btn.querySelector('i');
+    btn.addEventListener('click', function () {
+        var showing = input.type === 'text';
+        input.type = showing ? 'password' : 'text';
+        btn.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
+        btn.setAttribute('title', showing ? 'Show password' : 'Hide password');
+        if (icon) {
+            icon.className = showing ? 'fa fa-eye' : 'fa fa-eye-slash';
+        }
+    });
+})();
+</script>
 @endsection

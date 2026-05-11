@@ -1,6 +1,81 @@
 @extends('layouts.master')
 
 @section('css')
+<style>
+    #datatable-buttons {
+        width: 100% !important;
+    }
+    #datatable-buttons th,
+    #datatable-buttons td {
+        font-size: 0.82rem;
+        white-space: nowrap !important;
+        vertical-align: middle;
+    }
+    #datatable-buttons th:nth-child(1) { width: 16%; }
+    #datatable-buttons th:nth-child(2) { width: 15%; }
+    #datatable-buttons th:nth-child(3) { width: 15%; }
+    #datatable-buttons th:nth-child(4) { width: 20%; }
+    #datatable-buttons th:nth-child(5) { width: 12%; }
+    #datatable-buttons th:nth-child(6) { width: 14%; }
+    #datatable-buttons th:nth-child(7) { width: 18%; }
+    table.dataTable.dtr-inline.collapsed > tbody > tr[role="row"] > td:first-child:before,
+    table.dataTable.dtr-inline.collapsed > tbody > tr[role="row"] > th:first-child:before {
+        display: none !important;
+    }
+    .employee-action-group {
+        display: flex;
+        align-items: center;
+        flex-wrap: nowrap;
+        gap: 0.25rem;
+    }
+    .employee-action-group .btn {
+        margin-right: 0;
+        margin-bottom: 0;
+        padding: 0.22rem 0.42rem;
+        font-size: 0.74rem;
+        white-space: nowrap !important;
+    }
+    .employee-profile-modal .modal-content {
+        border: 0;
+        border-radius: 18px;
+        overflow: hidden;
+    }
+    .employee-profile-modal .profile-hero {
+        background: linear-gradient(135deg, #8B4513 0%, #b66a33 100%);
+        color: #fff;
+        padding: 1.5rem;
+    }
+    .employee-profile-modal .profile-avatar {
+        width: 68px;
+        height: 68px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.18);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+    }
+    .employee-profile-modal .info-card {
+        border: 1px solid #ecd9ca;
+        border-radius: 14px;
+        background: #fffdfa;
+        padding: 1rem;
+        height: 100%;
+    }
+    .employee-profile-modal .info-label {
+        display: block;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #8a6a55;
+        margin-bottom: 0.3rem;
+    }
+    .employee-profile-modal .info-value {
+        color: #3e2412;
+        font-weight: 600;
+        word-break: break-word;
+    }
+</style>
 @endsection
 
 @section('breadcrumb')
@@ -15,7 +90,7 @@
 </div>
 @endsection
 @section('button')
-<a href="#addnew" data-toggle="modal" class="btn btn-primary btn-sm btn-flat"><i class="mdi mdi-plus mr-2"></i>Add</a>
+<a href="#addnew" data-toggle="modal" class="btn btn-primary btn-sm btn-flat">Add</a>
         
 
 @endsection
@@ -63,7 +138,7 @@
                                                     </div>
                                                 </div>
 
-                                                <table id="datatable-buttons" class="table table-striped table-bordered dt-responsive nowrap" style="border-collapse: collapse; border-spacing: 0; width: 100%;">
+                                                <table id="datatable-buttons" class="table table-striped table-bordered nowrap" style="border-collapse: collapse; border-spacing: 0; width: 100%;">
                                         
                                                     <thead>
                                                     <tr>
@@ -73,7 +148,7 @@
                                                         <th data-priority="4">Email</th>
                                                         <th data-priority="4">Schedule</th>
                                                         <th data-priority="5">Member Since</th>
-                                                        <th data-priority="6">Actions</th>
+                                                        <th data-priority="1">Actions</th>
                                                       
                                                     </tr>
                                                     </thead>
@@ -95,8 +170,8 @@
                                                             <td title="{{ $employee->created_at }}">
                                                                 {{ \Carbon\Carbon::parse($employee->created_at)->format('M d, Y h:i A') }}
                                                             </td>
-                                                            <td>
-                        
+                                                            <td class="employee-action-group">
+                                                                <a href="{{ route('employees.profile', $employee->id) }}" class="btn btn-info btn-sm btn-flat"><i class='fa fa-eye'></i> View</a>
                                                                 <a href="#edit-employee-{{ $employee->id }}" data-toggle="modal" class="btn btn-success btn-sm edit btn-flat"><i class='fa fa-edit'></i> Edit</a>
                                                                 <a href="#delete-employee-{{ $employee->id }}" data-toggle="modal" class="btn btn-danger btn-sm delete btn-flat"><i class='fa fa-trash'></i> Delete</a>
                                                             </td>
@@ -172,6 +247,7 @@
             sel.addEventListener('change', function () {
                 applyDepartmentFilter(sel.value);
             });
+
         });
     })();
 

@@ -13,6 +13,16 @@ use App\Models\EmployeeShiftRotation;
 
 class EmployeeController extends Controller
 {
+    protected function fillProfileDetails(Employee $employee, EmployeeRec $request): void
+    {
+        $employee->date_hired = $request->input('date_hired');
+        $employee->employment_type = $request->input('employment_type');
+        $employee->skills = $request->input('skills');
+        $employee->achievements = $request->input('achievements');
+        $employee->emergency_contact_name = $request->input('emergency_contact_name');
+        $employee->emergency_contact_relationship = $request->input('emergency_contact_relationship');
+        $employee->emergency_contact_phone = $request->input('emergency_contact_phone');
+    }
    
     public function index()
     {
@@ -20,7 +30,7 @@ class EmployeeController extends Controller
         return view('admin.employee')->with([
             'employees' => Employee::with('department')->get(),
             'schedules' => Schedule::all(),
-            'departments' => Department::query()->where('is_active', 1)->orderBy('name')->get(),
+            'departments' => Department::query()->orderBy('name')->get(),
         ]);
     }
 
@@ -39,6 +49,8 @@ class EmployeeController extends Controller
         $employee->department_id = $request->department_id;
         // Keep legacy string column aligned for older screens/exports
         $employee->department = $deptName;
+        $employee->schedule_department_key = $request->input('schedule_department_key') ?: null;
+        $this->fillProfileDetails($employee, $request);
         
         // Face recognition data
         if ($request->face_descriptor) {
@@ -113,6 +125,8 @@ class EmployeeController extends Controller
         $employee->pin_code = bcrypt($request->pin_code);
         $employee->department_id = $request->department_id;
         $employee->department = $deptName;
+        $employee->schedule_department_key = $request->input('schedule_department_key') ?: null;
+        $this->fillProfileDetails($employee, $request);
         
         // Face recognition data
         if ($request->face_descriptor) {
@@ -173,6 +187,16 @@ class EmployeeController extends Controller
         flash()->success('Success','Employee Record has been Updated successfully !');
 
         return redirect()->route('employees.index')->with('success');
+    }
+
+    public function profile($id)
+    {
+        $employee = Employee::with(['department', 'schedules', 'shiftRotation'])->findOrFail($id);
+
+        return view('admin.employee-profile', [
+            'employee' => $employee,
+            'schedule' => $employee->schedules->first(),
+        ]);
     }
 
 

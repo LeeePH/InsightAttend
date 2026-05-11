@@ -11,12 +11,10 @@
     :root {
         --login-bg-deep: #2d190f;
         --login-surface: rgba(255, 255, 255, 0.07);
-        --login-surface-2: rgba(255, 255, 255, 0.1);
         --login-border: rgba(255, 255, 255, 0.12);
         --login-text: #f1f5f9;
         --login-muted: rgba(241, 245, 249, 0.65);
         --login-accent: #8B4513;
-        --login-accent-hover: #a85a24;
         --login-accent-soft: rgba(139, 69, 19, 0.22);
         --login-radius: 20px;
         --login-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
@@ -188,26 +186,35 @@
         color: #fff;
     }
 
-    .login-card .form-control.is-invalid {
-        border-color: rgba(248, 113, 113, 0.7);
+    .password-field {
+        position: relative;
     }
 
-    .login-card .form-control.is-invalid:focus {
-        box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.2);
+    .password-field .form-control {
+        padding-right: 52px;
+    }
+
+    .password-toggle {
+        position: absolute;
+        top: 50%;
+        right: 14px;
+        transform: translateY(-50%);
+        border: 0;
+        background: transparent;
+        color: rgba(241, 245, 249, 0.7);
+        padding: 0;
+        cursor: pointer;
+    }
+
+    .password-toggle:focus {
+        outline: none;
+        color: #fff;
     }
 
     .login-card .invalid-feedback {
         margin-top: 8px;
         font-size: 0.85rem;
         color: #fecaca;
-    }
-
-    .login-card .invalid-feedback strong {
-        font-weight: 600;
-    }
-
-    .login-remember {
-        margin-bottom: 24px;
     }
 
     .login-card .form-check {
@@ -261,10 +268,6 @@
         box-shadow: 0 16px 40px rgba(139, 69, 19, 0.48);
         outline: none;
     }
-
-    .login-submit:active {
-        transform: translateY(0);
-    }
 </style>
 
 <a href="{{ url('/') }}" class="login-back" aria-label="Back to home">
@@ -302,9 +305,14 @@
 
                 <div class="form-group">
                     <label for="password" class="col-form-label d-block">{{ __('Password') }}</label>
-                    <input id="password" type="password" class="form-control @error('password') is-invalid @enderror"
-                        name="password" required autocomplete="current-password"
-                        placeholder="••••••••">
+                    <div class="password-field">
+                        <input id="password" type="password" class="form-control @error('password') is-invalid @enderror"
+                            name="password" required autocomplete="current-password"
+                            placeholder="Password">
+                        <button type="button" class="password-toggle" id="togglePassword" aria-label="Show password">
+                            <i class="fa fa-eye" aria-hidden="true"></i>
+                        </button>
+                    </div>
 
                     @error('password')
                         <span class="invalid-feedback d-block" role="alert">
@@ -331,4 +339,20 @@
 @endsection
 
 @section('script')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var password = document.getElementById('password');
+        var toggle = document.getElementById('togglePassword');
+        if (!password || !toggle) return;
+
+        toggle.addEventListener('click', function () {
+            var visible = password.type === 'text';
+            password.type = visible ? 'password' : 'text';
+            toggle.setAttribute('aria-label', visible ? 'Show password' : 'Hide password');
+            toggle.innerHTML = visible
+                ? '<i class="fa fa-eye" aria-hidden="true"></i>'
+                : '<i class="fa fa-eye-slash" aria-hidden="true"></i>';
+        });
+    });
+</script>
 @endsection

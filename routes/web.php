@@ -9,10 +9,20 @@ Route::get('/', function () {
     return view('welcome');
 })->name('welcome');
 
+Route::get('/profile', '\App\Http\Controllers\HomeController@profile')->name('profile')->middleware('auth');
+Route::get('/lock-screen/view', '\App\Http\Controllers\HomeController@showLockScreen')->name('lock.screen.form');
+Route::post('/lock-screen/unlock', '\App\Http\Controllers\HomeController@unlockScreen')->name('lock.screen.unlock');
+Route::get('/lock-screen', '\App\Http\Controllers\HomeController@lockScreen')->name('lock.screen')->middleware('auth');
+
 // Employee dashboard route
 Route::get('/employee/dashboard', '\App\Http\Controllers\HomeController@employeeDashboard')->name('employee.dashboard')->middleware('auth');
 Route::post('/employee/password', '\App\Http\Controllers\HomeController@updatePassword')->name('employee.password.update')->middleware('auth');
 Route::get('/employee/attendance-logs', '\App\Http\Controllers\HomeController@employeeAttendanceLogs')->name('employee.attendance_logs')->middleware('auth');
+Route::group(['middleware' => ['auth', 'Role'], 'roles' => ['employee']], function () {
+    Route::get('/employee/my-schedule', '\App\Http\Controllers\EmployeeTimetableController@mySchedule')->name('employee.my_schedule');
+    Route::get('/employee/my-schedule/preview', '\App\Http\Controllers\EmployeeTimetableController@mySchedulePreview')->name('employee.my_schedule.preview');
+    Route::get('/employee/my-schedule/pdf', '\App\Http\Controllers\EmployeeTimetableController@mySchedulePdf')->name('employee.my_schedule.pdf');
+});
 Route::get('/employee/settings', '\App\Http\Controllers\HomeController@employeeSettings')->name('employee.settings')->middleware('auth');
 Route::post('/employee/settings/profile', '\App\Http\Controllers\HomeController@updateEmployeeProfile')->name('employee.settings.profile')->middleware('auth');
 Route::post('/employee/settings/password', '\App\Http\Controllers\HomeController@updatePassword')->name('employee.settings.password')->middleware('auth');
@@ -73,6 +83,7 @@ Route::get('attended-before/{user_id}', '\App\Http\Controllers\AttendanceControl
 Auth::routes(['register' => false, 'reset' => false]);
 
 Route::group(['middleware' => ['auth', 'Role'], 'roles' => ['admin']], function () {
+    Route::get('/employees/{id}/profile', '\App\Http\Controllers\EmployeeController@profile')->name('employees.profile');
     Route::resource('/employees', '\App\Http\Controllers\EmployeeController');
     Route::resource('/employees', '\App\Http\Controllers\EmployeeController');
     Route::get('/attendance', '\App\Http\Controllers\AttendanceController@index')->name('attendance');
@@ -125,26 +136,16 @@ Route::group(['middleware' => ['auth', 'Role'], 'roles' => ['admin']], function 
     Route::get('/admin/backups/{backup}/download', '\App\Http\Controllers\BackupController@download')->name('admin.backups.download');
     Route::post('/admin/backups/{backup}/restore', '\App\Http\Controllers\BackupController@restore')->name('admin.backups.restore');
     Route::post('/admin/backups/upload-restore', '\App\Http\Controllers\BackupController@uploadAndRestore')->name('admin.backups.upload_restore');
+    Route::post('/admin/backups/reset-database', '\App\Http\Controllers\BackupController@resetDatabase')->name('admin.backups.reset_database');
+    Route::post('/admin/backups/delete-database', '\App\Http\Controllers\BackupController@deleteDatabase')->name('admin.backups.delete_database');
     Route::get('/admin/user-management', '\App\Http\Controllers\UserManagementController@index')->name('admin.user_management');
     Route::put('/admin/user-management/{user}', '\App\Http\Controllers\UserManagementController@update')->name('admin.user_management.update');
     Route::get('/admin/audit-logs', '\App\Http\Controllers\AuditLogController@index')->name('admin.audit_logs');
-    Route::get('/admin/maintenance-form', '\App\Http\Controllers\MaintenanceController@formBuilder')->name('admin.maintenance_form');
-    Route::post('/admin/maintenance-form/templates', '\App\Http\Controllers\MaintenanceController@storeTemplate')->name('admin.maintenance_form.templates.store');
-    Route::put('/admin/maintenance-form/templates/{template}', '\App\Http\Controllers\MaintenanceController@updateTemplate')->name('admin.maintenance_form.templates.update');
-    Route::delete('/admin/maintenance-form/templates/{template}', '\App\Http\Controllers\MaintenanceController@destroyTemplate')->name('admin.maintenance_form.templates.destroy');
-    Route::post('/admin/maintenance-form/templates/{template}/fields', '\App\Http\Controllers\MaintenanceController@storeTemplateField')->name('admin.maintenance_form.fields.store');
-    Route::put('/admin/maintenance-form/templates/{template}/fields/{field}', '\App\Http\Controllers\MaintenanceController@updateTemplateField')->name('admin.maintenance_form.fields.update');
-    Route::delete('/admin/maintenance-form/templates/{template}/fields/{field}', '\App\Http\Controllers\MaintenanceController@destroyTemplateField')->name('admin.maintenance_form.fields.destroy');
     Route::get('/admin/maintenance', '\App\Http\Controllers\MaintenanceController@index')->name('admin.maintenance');
     Route::post('/admin/maintenance', '\App\Http\Controllers\MaintenanceController@store')->name('admin.maintenance.store');
 
     Route::get('/admin', '\App\Http\Controllers\AdminController@index')->name('admin');
 
-    Route::resource('/schedule', '\App\Http\Controllers\ScheduleController');
-    Route::get('/schedule/{schedule}/shifts', '\App\Http\Controllers\ScheduleController@shifts')->name('schedule.shifts');
-    Route::post('/schedule/{schedule}/shifts', '\App\Http\Controllers\ScheduleController@storeShift')->name('schedule.shifts.store');
-    Route::put('/schedule/{schedule}/shifts/{shift}', '\App\Http\Controllers\ScheduleController@updateShift')->name('schedule.shifts.update');
-    Route::delete('/schedule/{schedule}/shifts/{shift}', '\App\Http\Controllers\ScheduleController@destroyShift')->name('schedule.shifts.destroy');
     Route::resource('/departments', '\App\Http\Controllers\DepartmentController');
     Route::get('/department-reports', '\App\Http\Controllers\DepartmentReportController@index')->name('departments.report');
 
@@ -169,6 +170,22 @@ Route::group(['middleware' => ['auth', 'Role'], 'roles' => ['admin']], function 
     })->name('finger_device.clear.attendance');
     
 
+});
+
+Route::group(['middleware' => ['auth', 'Role'], 'roles' => ['admin', 'hr', 'secretary']], function () {
+    Route::get('/employee-timetable/pdf', '\App\Http\Controllers\EmployeeTimetableController@pdf')->name('employee_timetable.pdf');
+    Route::get('/employee-timetable', '\App\Http\Controllers\EmployeeTimetableController@index')->name('employee_timetable.index');
+    Route::post('/employee-timetable', '\App\Http\Controllers\EmployeeTimetableController@store')->name('employee_timetable.store');
+    Route::put('/employee-timetable/{entry}', '\App\Http\Controllers\EmployeeTimetableController@update')->name('employee_timetable.update');
+    Route::delete('/employee-timetable/{entry}', '\App\Http\Controllers\EmployeeTimetableController@destroy')->name('employee_timetable.destroy');
+});
+
+Route::group(['middleware' => ['auth', 'Role'], 'roles' => ['admin', 'hr']], function () {
+    Route::get('/admin/maintenance-form', '\App\Http\Controllers\MaintenanceController@formBuilder')->name('admin.maintenance_form');
+    Route::post('/admin/maintenance-form/courses', '\App\Http\Controllers\MaintenanceController@storeCourse')->name('admin.maintenance_form.courses.store');
+    Route::put('/admin/maintenance-form/courses/{course}', '\App\Http\Controllers\MaintenanceController@updateCourse')->name('admin.maintenance_form.courses.update');
+    Route::delete('/admin/maintenance-form/courses/{course}', '\App\Http\Controllers\MaintenanceController@destroyCourse')->name('admin.maintenance_form.courses.destroy');
+    Route::post('/admin/maintenance-form/timetable-settings', '\App\Http\Controllers\MaintenanceController@updateTimetableSettings')->name('admin.maintenance_form.timetable_settings.update');
 });
 
 Route::group(['middleware' => ['auth']], function () {

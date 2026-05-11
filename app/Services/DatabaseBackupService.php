@@ -2,8 +2,11 @@
 
 namespace App\Services;
 
+use App\Models\Department;
+use Database\Seeders\AdminUserSeeder;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
@@ -11,6 +14,14 @@ use RuntimeException;
 class DatabaseBackupService
 {
     private const BACKUP_DIR = 'backups';
+    private const FIXED_DEPARTMENTS = [
+        'Student Services Department',
+        'Admin Department',
+        'Academic Department',
+        'Finance Department',
+        'Registrar Department',
+        'HR department',
+    ];
 
     public function createBackup(?string $label = null): array
     {
@@ -157,6 +168,69 @@ class DatabaseBackupService
         return self::BACKUP_DIR . '/' . $safeName;
     }
 
+    public function getDatabaseStats(): array
+    {
+        $driver = DB::connection()->getDriverName();
+        $tables = $this->getTableNames($driver);
+        $rows = 0;
+
+        foreach ($tables as $table) {
+            try {
+                $rows += (int) DB::table($table)->count();
+            } catch (\Throwable $e) {
+                // Ignore tables that cannot be counted cleanly.
+            }
+        }
+
+        return [
+            'database' => DB::connection()->getDatabaseName(),
+            'driver' => $driver,
+            'table_count' => count($tables),
+            'row_count' => $rows,
+            'backup_count' => count($this->listBackups()),
+        ];
+    }
+
+    public function resetDatabase(): void
+    {
+        $driver = DB::connection()->getDriverName();
+        $tables = array_values(array_filter(
+            $this->getTableNames($driver),
+            fn ($table) => $table !== 'migrations'
+        ));
+
+        DB::transaction(function () use ($driver, $tables) {
+            $this->disableForeignKeys($driver);
+
+            try {
+                foreach ($tables as $table) {
+                    DB::table($table)->delete();
+                }
+            } finally {
+                $this->enableForeignKeys($driver);
+            }
+        });
+
+        Artisan::call('db:seed', ['--class' => AdminUserSeeder::class, '--force' => true]);
+        $this->restoreFixedDepartments();
+    }
+
+    public function deleteDatabase(): void
+    {
+        $driver = DB::connection()->getDriverName();
+        $tables = array_reverse($this->getTableNames($driver));
+
+        $this->disableForeignKeys($driver);
+
+        try {
+            foreach ($tables as $table) {
+                Schema::dropIfExists($table);
+            }
+        } finally {
+            $this->enableForeignKeys($driver);
+        }
+    }
+
     private function getTableNames(string $driver): array
     {
         switch ($driver) {
@@ -213,6 +287,16 @@ class DatabaseBackupService
             case 'pgsql':
                 DB::statement("SET session_replication_role = 'origin'");
                 break;
+        }
+    }
+
+    private function restoreFixedDepartments(): void
+    {
+        foreach (self::FIXED_DEPARTMENTS as $name) {
+            Department::updateOrCreate(
+                ['name' => $name],
+                ['description' => null, 'is_active' => true]
+            );
         }
     }
 }

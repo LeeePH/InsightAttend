@@ -67,6 +67,19 @@
         color: #f9ede4 !important;
     }
 
+    #sidebar-menu ul.submenu li a,
+    #sidebar-menu ul.submenu li a span,
+    #sidebar-menu ul.submenu li a i {
+        color: #f9ede4 !important;
+    }
+
+    #sidebar-menu ul.submenu li a:hover,
+    #sidebar-menu ul.submenu li a:focus,
+    #sidebar-menu ul.submenu li a.mm.active,
+    #sidebar-menu ul.submenu li a.mm-active {
+        color: #ffffff !important;
+    }
+
     #sidebar-menu > ul > li > a:hover,
     #sidebar-menu > ul > li > a:focus,
     #sidebar-menu > ul > li > a:active {
@@ -89,6 +102,10 @@
     .text-muted,
     .page-title-box .breadcrumb .active {
         color: var(--brand-muted) !important;
+    }
+
+    .page-title-box .breadcrumb {
+        display: none !important;
     }
 
     .btn-primary,

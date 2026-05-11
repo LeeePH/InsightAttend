@@ -32,23 +32,39 @@
     @include('includes.flash')
 
     <div class="row">
-        <div class="col-md-3">
+        <div class="col-6 col-md-2">
             <div class="card summary-card">
                 <div class="card-body">
-                    <div class="text-muted">Total Users</div>
+                    <div class="text-muted">Total</div>
                     <div class="summary-count">{{ $roleSummary['total'] }}</div>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-6 col-md-2">
             <div class="card summary-card">
                 <div class="card-body">
-                    <div class="text-muted">Administrators</div>
+                    <div class="text-muted">Admin</div>
                     <div class="summary-count">{{ $roleSummary['admin'] }}</div>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-6 col-md-2">
+            <div class="card summary-card">
+                <div class="card-body">
+                    <div class="text-muted">HR</div>
+                    <div class="summary-count">{{ $roleSummary['hr'] }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-2">
+            <div class="card summary-card">
+                <div class="card-body">
+                    <div class="text-muted">Secretary</div>
+                    <div class="summary-count">{{ $roleSummary['secretary'] }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-2">
             <div class="card summary-card">
                 <div class="card-body">
                     <div class="text-muted">Staff</div>
@@ -56,10 +72,10 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-6 col-md-2">
             <div class="card summary-card">
                 <div class="card-body">
-                    <div class="text-muted">Employees</div>
+                    <div class="text-muted">Employee</div>
                     <div class="summary-count">{{ $roleSummary['employee'] }}</div>
                 </div>
             </div>
@@ -78,6 +94,7 @@
                                     <th>Name</th>
                                     <th>Email</th>
                                     <th>Role</th>
+                                    <th>Schedule scope</th>
                                     <th>Created</th>
                                     <th style="width: 120px;">Action</th>
                                 </tr>
@@ -90,9 +107,16 @@
                                         <td>{{ $user->email }}</td>
                                         <td>
                                             @if($currentRole)
-                                                <span class="badge badge-info">{{ $currentRole->name }} ({{ $currentRole->slug }})</span>
+                                                <span class="badge badge-info">{{ $currentRole->name }}</span>
                                             @else
                                                 <span class="badge badge-secondary">No role</span>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if($user->managed_schedule_department)
+                                                <span class="badge badge-secondary">{{ $user->managed_schedule_department }}</span>
+                                            @else
+                                                <span class="text-muted">—</span>
                                             @endif
                                         </td>
                                         <td>{{ $user->created_at ? $user->created_at->format('M d, Y') : '-' }}</td>
@@ -124,13 +148,23 @@
                                                         </div>
                                                         <div class="form-group">
                                                             <label>Role</label>
-                                                            <select name="role_id" class="form-control" required>
+                                                            <select name="role_id" class="form-control js-role-select" required>
                                                                 @foreach($roles as $role)
-                                                                    <option value="{{ $role->id }}" {{ $currentRole && $currentRole->id === $role->id ? 'selected' : '' }}>
-                                                                        {{ $role->name }} ({{ $role->slug }})
+                                                                    <option value="{{ $role->id }}" data-role-slug="{{ $role->slug }}" {{ $currentRole && $currentRole->id === $role->id ? 'selected' : '' }}>
+                                                                        {{ $role->display_label ?? $role->name }}
                                                                     </option>
                                                                 @endforeach
                                                             </select>
+                                                        </div>
+                                                        <div class="form-group js-sec-dept-wrap" style="{{ $currentRole && $currentRole->slug === 'secretary' ? '' : 'display:none;' }}">
+                                                            <label>Managed scheduling department</label>
+                                                            <select name="managed_schedule_department" class="form-control">
+                                                                <option value="">— Select —</option>
+                                                                @foreach(['IT', 'EDUC', 'SHTM'] as $dk)
+                                                                    <option value="{{ $dk }}" {{ ($user->managed_schedule_department ?? '') === $dk ? 'selected' : '' }}>{{ $dk }}</option>
+                                                                @endforeach
+                                                            </select>
+                                                            <small class="text-muted d-block mt-1">Required for secretary accounts (timetable access is limited to this department).</small>
                                                         </div>
                                                         <div class="form-group mb-0">
                                                             <label>New Password (Optional)</label>
@@ -147,7 +181,7 @@
                                     </div>
                                 @empty
                                     <tr>
-                                        <td colspan="5" class="text-center text-muted">No users found.</td>
+                                        <td colspan="6" class="text-center text-muted">No users found.</td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -157,4 +191,30 @@
             </div>
         </div>
     </div>
+@endsection
+
+@section('script')
+<script>
+(function () {
+    function slugFromRoleSelect(sel) {
+        var opt = sel.options[sel.selectedIndex];
+        return opt ? (opt.getAttribute('data-role-slug') || '') : '';
+    }
+    function refreshSecDept(sel) {
+        var modal = sel.closest('.modal-content');
+        if (!modal) return;
+        var wrap = modal.querySelector('.js-sec-dept-wrap');
+        if (!wrap) return;
+        wrap.style.display = slugFromRoleSelect(sel) === 'secretary' ? '' : 'none';
+    }
+    document.addEventListener('change', function (e) {
+        if (e.target.matches('.js-role-select')) {
+            refreshSecDept(e.target);
+        }
+    });
+    document.querySelectorAll('.js-role-select').forEach(function (sel) {
+        refreshSecDept(sel);
+    });
+})();
+</script>
 @endsection

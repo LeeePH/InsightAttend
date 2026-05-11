@@ -147,7 +147,14 @@ class CheckController extends Controller
     }
     public function sheetReport()
     {
+        $employees = Employee::query()
+            ->orderBy('department')
+            ->orderBy('name')
+            ->get()
+            ->groupBy(function ($employee) {
+                return trim((string) ($employee->department ?: 'Unassigned'));
+            });
 
-    return view('admin.sheet-report')->with(['employees' => Employee::all()]);
+        return view('admin.sheet-report')->with(['employeesByDept' => $employees]);
     }
 }

@@ -5,10 +5,10 @@
 <div class="topbar-left">
     <a href="/" class="logo">
         <span>
-            <h1 style="color: white; ">Insight</h1>
+            <img src="{{ asset('assets/images/logo-sm.jpg') }}" alt="School logo" style="height:56px; width:56px; object-fit:cover; border-radius:14px; box-shadow:0 8px 18px rgba(0,0,0,.18);">
         </span>
         <i>
-            <h1>A</h1>
+            <img src="{{ asset('assets/images/logo-sm.jpg') }}" alt="School logo" style="height:34px; width:34px; object-fit:cover; border-radius:10px;">
         </i>
     </a>
 </div>
@@ -29,10 +29,10 @@
                 </a>
                 <div class="dropdown-menu dropdown-menu-right profile-dropdown ">
                     <!-- item-->
-                    <a class="dropdown-item" href="#"><i class="mdi mdi-account-circle m-r-5"></i> Profile</a>
+                    <a class="dropdown-item" href="{{ route('profile') }}"><i class="mdi mdi-account-circle m-r-5"></i> Profile</a>
             
                     {{-- <a class="dropdown-item d-block" href="#"><span class="badge badge-success float-right">11</span><i class="mdi mdi-settings m-r-5"></i> Settings</a> --}}
-                    <a class="dropdown-item" href="#"><i class="mdi mdi-lock-open-outline m-r-5"></i> Lock screen</a>
+                    <a class="dropdown-item" href="{{ route('lock.screen') }}"><i class="mdi mdi-lock-open-outline m-r-5"></i> Lock screen</a>
                     <div class="dropdown-divider"></div>
                     <a class="dropdown-item text-danger" href="{{ route('logout') }}" onclick="event.preventDefault();
                     document.getElementById('logout-form').submit();"><i class="mdi mdi-power text-danger"></i> {{ __('Logout') }}</a>

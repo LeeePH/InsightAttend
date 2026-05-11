@@ -19,7 +19,15 @@ class Employee extends Model
     protected $table = 'employees';
     protected $fillable = [
         'name', 'email', 'phone', 'pin_code', 'position', 'department', 'face_descriptor', 'face_image', 'face_registered',
-        'employment_status', 'departure_date', 'departure_reason', 'status_updated_by'
+        'employment_status', 'departure_date', 'departure_reason', 'status_updated_by', 'date_hired',
+        'employment_type', 'skills', 'achievements',         'emergency_contact_name',
+        'emergency_contact_relationship', 'emergency_contact_phone',
+        'schedule_department_key',
+    ];
+
+    protected $casts = [
+        'date_hired' => 'date',
+        'face_registered' => 'boolean',
     ];
 
     public function routeNotificationForTwilioSms($notification = null)
@@ -74,7 +82,9 @@ class Employee extends Model
         return $this->hasOne(User::class);
     }
 
-
-    
-
+    public function timetableEntries()
+    {
+        return $this->hasMany(EmployeeTimetableEntry::class, 'employee_id');
+    }
 }
+

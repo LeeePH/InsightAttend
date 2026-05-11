@@ -26,26 +26,14 @@
                             <li class="menu-title">Management</li>
 
                             <li class="">
-                                <a href="/schedule" class="waves-effect {{ request()->is("schedule") || request()->is("schedule/*") ? "mm active" : "" }}">
-                                    <i class="ti-time"></i> <span> Schedule </span>
+                                <a href="{{ route('employee_timetable.index') }}" class="waves-effect {{ request()->is("employee-timetable") || request()->is("employee-timetable/*") ? "mm active" : "" }}">
+                                    <i class="ti-layout-grid3-alt"></i> <span> Schedule Management </span>
                                 </a>
                             </li>
-                            <li class="{{ (request()->is('departments') || request()->is('departments/*') || request()->is('department-reports')) ? 'mm-active' : '' }}">
-                                <a href="javascript:void(0);" class="has-arrow waves-effect {{ (request()->is('departments') || request()->is('departments/*') || request()->is('department-reports')) ? 'mm active' : '' }}">
+                            <li class="">
+                                <a href="{{ route('departments.report') }}" class="waves-effect {{ request()->is('department-reports') ? 'mm active' : '' }}">
                                     <i class="ti-layers"></i> <span> Department Management </span>
                                 </a>
-                                <ul class="submenu" aria-expanded="false">
-                                    <li>
-                                        <a href="{{ route('departments.index') }}" class="waves-effect {{ request()->is('departments') || request()->is('departments/*') ? 'mm active' : '' }}">
-                                            <span>Departments</span>
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a href="{{ route('departments.report') }}" class="waves-effect {{ request()->is('department-reports') ? 'mm active' : '' }}">
-                                            <span>Department Reports</span>
-                                        </a>
-                                    </li>
-                                </ul>
                             </li>
                             <li class="">
                                 <a href="/check" class="waves-effect {{ request()->is("check") || request()->is("check/*") ? "mm active" : "" }}">
@@ -117,7 +105,7 @@
                                     </li>
                                     <li>
                                         <a href="{{ route('admin.backups') }}" class="waves-effect {{ request()->is('admin/backups') ? 'mm active' : '' }}">
-                                            <span>Backups</span>
+                                            <span>Admin Management</span>
                                         </a>
                                     </li>
                                     <li>
@@ -138,11 +126,36 @@
                                     <i class="fas fa-fingerprint"></i> <span> Biometric Device </span>
                                 </a>
                             </li> --}}
+                                @elseif(auth()->user()->hasAnyRole(['hr', 'secretary']))
+                            <li class="menu-title">Scheduling</li>
+                            <li class="">
+                                <a href="{{ route('employee_timetable.index') }}" class="waves-effect {{ request()->is("employee-timetable") || request()->is("employee-timetable/*") ? "mm active" : "" }}">
+                                    <i class="ti-layout-grid3-alt"></i> <span> Schedule Management </span>
+                                </a>
+                            </li>
+                            @if(auth()->user()->hasRole('hr'))
+                            <li class="">
+                                <a href="{{ route('admin.maintenance_form') }}" class="waves-effect {{ request()->is('admin/maintenance-form') ? 'mm active' : '' }}">
+                                    <i class="fa fa-sliders"></i> <span> Maintenance Form </span>
+                                </a>
+                            </li>
+                            @endif
+                            <li class="menu-title">Account</li>
+                            <li class="">
+                                <a href="{{ route('profile') }}" class="waves-effect {{ request()->is("profile") ? "mm active" : "" }}">
+                                    <i class="mdi mdi-account-circle"></i> <span> Profile </span>
+                                </a>
+                            </li>
                                 @elseif(auth()->user()->hasRole('employee'))
                             <li class="menu-title">Employee Menu</li>
                             <li class="">
                                 <a href="{{route('employee.dashboard')}}" class="waves-effect {{ request()->is("employee/dashboard") ? "mm active" : "" }}">
                                     <i class="ti-home"></i><span> Dashboard </span>
+                                </a>
+                            </li>
+                            <li class="">
+                                <a href="{{ route('employee.my_schedule') }}" class="waves-effect {{ request()->is("employee/my-schedule") ? "mm active" : "" }}">
+                                    <i class="ti-layout-grid3-alt"></i> <span> My schedule </span>
                                 </a>
                             </li>
                             <li class="">

@@ -35,7 +35,7 @@ class User extends Authenticatable
 
     public function hasAnyRole($roles)
     {
-        if (Is_array($roles)) {
+        if (is_array($roles)) {
             foreach ($roles as $role) {
                 if ($this->hasRole($role)) {
                     return true;
@@ -52,23 +52,16 @@ class User extends Authenticatable
 
     public function hasRole($role)
     {
-        $user = $this;
-        if (!$user) {
+        if (!$this->exists) {
             return false;
         }
-        $firstRole = $user->roles()->first();
-        if (!$firstRole) {
-            return false;
-        }
-        if ($firstRole->slug === $role) {
-            return true;
-        }
-        return false;
+
+        return $this->roles()->where('slug', $role)->exists();
     }
 
 
     protected $fillable = [
-        'name', 'email', 'password', 'pin_code',
+        'name', 'email', 'password', 'pin_code', 'managed_schedule_department',
     ];
 
   

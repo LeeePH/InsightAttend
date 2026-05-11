@@ -4,10 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Models\Department;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 class DepartmentController extends Controller
 {
+    private const FIXED_DEPARTMENTS = [
+        'Student Services Department',
+        'Admin Department',
+        'Academic Department',
+        'Finance Department',
+        'Registrar Department',
+        'HR department',
+    ];
     /**
      * Display a listing of the resource.
      *
@@ -15,6 +22,7 @@ class DepartmentController extends Controller
      */
     public function index()
     {
+        $this->syncFixedDepartments();
         $departments = Department::query()->orderBy('name')->get();
         return view('admin.departments.index', compact('departments'));
     }
@@ -37,16 +45,7 @@ class DepartmentController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:128', 'unique:departments,name'],
-            'description' => ['nullable', 'string', 'max:500'],
-            'is_active' => ['nullable', 'boolean'],
-        ]);
-
-        $validated['is_active'] = (bool) ($validated['is_active'] ?? true);
-        Department::create($validated);
-
-        flash()->success('Success', 'Department created successfully!');
+        flash()->info('Info', 'Departments are fixed and managed automatically.');
         return redirect()->route('departments.index');
     }
 
@@ -81,17 +80,7 @@ class DepartmentController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $department = Department::findOrFail($id);
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:128', Rule::unique('departments', 'name')->ignore($department->id)],
-            'description' => ['nullable', 'string', 'max:500'],
-            'is_active' => ['nullable', 'boolean'],
-        ]);
-
-        $validated['is_active'] = (bool) ($validated['is_active'] ?? false);
-        $department->update($validated);
-
-        flash()->success('Success', 'Department updated successfully!');
+        flash()->info('Info', 'Departments are fixed and managed automatically.');
         return redirect()->route('departments.index');
     }
 
@@ -103,10 +92,21 @@ class DepartmentController extends Controller
      */
     public function destroy($id)
     {
-        $department = Department::findOrFail($id);
-        $department->update(['is_active' => false]);
-
-        flash()->success('Success', 'Department deactivated successfully!');
+        flash()->info('Info', 'Departments are fixed and managed automatically.');
         return redirect()->route('departments.index');
+    }
+
+    private function syncFixedDepartments(): void
+    {
+        Department::query()
+            ->whereNotIn('name', self::FIXED_DEPARTMENTS)
+            ->delete();
+
+        foreach (self::FIXED_DEPARTMENTS as $name) {
+            Department::updateOrCreate(
+                ['name' => $name],
+                ['description' => null, 'is_active' => true]
+            );
+        }
     }
 }

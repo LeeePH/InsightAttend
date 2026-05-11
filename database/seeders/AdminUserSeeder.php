@@ -31,6 +31,16 @@ class AdminUserSeeder extends Seeder
             ['name' => 'Staff']
         );
 
+        Role::firstOrCreate(
+            ['slug' => 'hr'],
+            ['name' => 'Human Resources']
+        );
+
+        Role::firstOrCreate(
+            ['slug' => 'secretary'],
+            ['name' => 'Department Secretary']
+        );
+
         // Create default admin only when it doesn't already exist.
         $adminUser = User::firstOrCreate(
             ['email' => 'admin@gmail.com'],

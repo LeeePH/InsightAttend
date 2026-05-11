@@ -2,46 +2,24 @@
 
 namespace App\Services;
 
-use App\Models\MaintenanceFormTemplate;
+use Illuminate\Support\Collection;
 
 class EmployeeRequestFormService
 {
     public function ensureDefaults(): void
     {
-        $defaults = $this->defaultDefinitions();
-        foreach ($defaults as $slug => $definition) {
-            $template = MaintenanceFormTemplate::firstOrCreate(
-                ['slug' => $slug],
-                [
-                    'name' => $definition['name'],
-                    'description' => $definition['description'],
-                    'is_active' => true,
-                ]
-            );
-
-            foreach ($definition['fields'] as $field) {
-                $template->fields()->firstOrCreate(
-                    ['field_key' => $field['field_key']],
-                    $field
-                );
-            }
-        }
+        // Legacy maintenance-form templates were removed.
+        // Request forms now use the built-in defaults in this service.
     }
 
-    public function getTemplate(string $slug): ?MaintenanceFormTemplate
+    public function getTemplate(string $slug)
     {
-        return MaintenanceFormTemplate::with(['fields' => function ($query) {
-            $query->orderBy('sort_order')->orderBy('id');
-        }])->where('slug', $slug)->first();
+        return null;
     }
 
     public function getManagedTemplates()
     {
-        return MaintenanceFormTemplate::with(['fields' => function ($query) {
-            $query->orderBy('sort_order')->orderBy('id');
-        }, 'creator'])->whereIn('slug', ['leave_request', 'resignation_request', 'loan_request', 'discount_request', 'overtime_authorization_request', 'undertime_authorization_request', 'permit_to_teach_outside_request', 'substitution_form_request', 'feedback_request'])
-            ->orderBy('name')
-            ->get();
+        return new Collection();
     }
 
     public function applyTemplateRules(string $slug, array $defaults): array
@@ -69,7 +47,7 @@ class EmployeeRequestFormService
         return $rules;
     }
 
-    public function fieldLabel(?MaintenanceFormTemplate $template, string $fieldKey, string $fallback): string
+    public function fieldLabel($template, string $fieldKey, string $fallback): string
     {
         if (!$template) {
             return $fallback;
@@ -79,7 +57,7 @@ class EmployeeRequestFormService
         return $field && $field->label ? $field->label : $fallback;
     }
 
-    public function fieldRequired(?MaintenanceFormTemplate $template, string $fieldKey, bool $fallback = false): bool
+    public function fieldRequired($template, string $fieldKey, bool $fallback = false): bool
     {
         if (!$template) {
             return $fallback;
@@ -93,7 +71,7 @@ class EmployeeRequestFormService
         return (bool) $field->is_required;
     }
 
-    public function selectOptions(?MaintenanceFormTemplate $template, string $fieldKey, array $fallback): array
+    public function selectOptions($template, string $fieldKey, array $fallback): array
     {
         if (!$template) {
             return $fallback;
@@ -126,7 +104,7 @@ class EmployeeRequestFormService
     /**
      * Merged theme + copy for employee-facing pages (leave / resignation).
      */
-    public function getMergedUiSettings(?MaintenanceFormTemplate $template, string $slug): array
+    public function getMergedUiSettings($template, string $slug): array
     {
         $defaults = $this->defaultUiSettingsForSlug($slug);
         $saved = ($template && is_array($template->ui_settings)) ? $template->ui_settings : [];
@@ -137,7 +115,7 @@ class EmployeeRequestFormService
     /**
      * Per-field presentation (placeholder, help, column width) for employee forms.
      */
-    public function fieldUiMap(?MaintenanceFormTemplate $template, string $slug): array
+    public function fieldUiMap($template, string $slug): array
     {
         $defaults = $this->defaultFieldUiBySlug($slug);
         if (!$template) {

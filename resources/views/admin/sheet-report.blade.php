@@ -3,7 +3,7 @@
 
     <div class="card">
         <div class="card-header bg-success text-white">
-            TimeTable
+            Attendance Sheet
         </div>
         <div class="card-body">
             <div class="table-responsive">
@@ -43,14 +43,19 @@
 
 
 
-                        @foreach ($employees as $employee)
-
-                            <input type="hidden" name="emp_id" value="{{ $employee->id }}">
-
+                        @foreach ($employeesByDept as $department => $departmentEmployees)
                             <tr>
-                                <td>{{ $employee->name }}</td>
-                                <td>{{ $employee->position }}</td>
-                                <td>{{ $employee->id }}</td>
+                                <td colspan="{{ 3 + count($dates) }}" style="background:#f1f3f5;font-weight:600;">
+                                    {{ $department }}
+                                </td>
+                            </tr>
+                            @foreach ($departmentEmployees as $employee)
+                                <input type="hidden" name="emp_id" value="{{ $employee->id }}">
+
+                                <tr>
+                                    <td>{{ $employee->name }}</td>
+                                    <td>{{ $employee->position }}</td>
+                                    <td>{{ $employee->id }}</td>
 
 
 
@@ -109,7 +114,8 @@
                                     </td>
 
                                 @endfor
-                            </tr>
+                                </tr>
+                            @endforeach
                         @endforeach
 
 
