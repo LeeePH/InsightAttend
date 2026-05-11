@@ -79,7 +79,7 @@ class Employee extends Model
 
     public function user()
     {
-        return $this->hasOne(User::class);
+        return $this->hasOne(User::class, 'email', 'email');
     }
 
     public function timetableEntries()

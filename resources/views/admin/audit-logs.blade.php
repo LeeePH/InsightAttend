@@ -113,7 +113,6 @@
                                     <th scope="col">User</th>
                                     <th scope="col">Role</th>
                                     <th scope="col">Activity</th>
-                                    <th scope="col">Status</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -123,11 +122,10 @@
                                         <td>{{ $log->user_name ?? 'System' }}</td>
                                         <td>{{ $log->role_slug ? strtoupper($log->role_slug) : '-' }}</td>
                                         <td class="activity-text">{{ $log->friendly_description }}</td>
-                                        <td>{{ $log->status_code ?? '-' }}</td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="5" class="text-center text-muted py-4">No audit records found.</td>
+                                        <td colspan="4" class="text-center text-muted py-4">No audit records found.</td>
                                     </tr>
                                 @endforelse
                             </tbody>

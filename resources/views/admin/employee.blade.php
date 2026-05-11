@@ -2,22 +2,37 @@
 
 @section('css')
 <style>
+    .employee-list-table-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin-bottom: 0;
+    }
     #datatable-buttons {
         width: 100% !important;
+        margin-bottom: 0;
     }
     #datatable-buttons th,
     #datatable-buttons td {
         font-size: 0.82rem;
-        white-space: nowrap !important;
         vertical-align: middle;
     }
-    #datatable-buttons th:nth-child(1) { width: 16%; }
-    #datatable-buttons th:nth-child(2) { width: 15%; }
-    #datatable-buttons th:nth-child(3) { width: 15%; }
-    #datatable-buttons th:nth-child(4) { width: 20%; }
-    #datatable-buttons th:nth-child(5) { width: 12%; }
-    #datatable-buttons th:nth-child(6) { width: 14%; }
-    #datatable-buttons th:nth-child(7) { width: 18%; }
+    #datatable-buttons th:not(:last-child),
+    #datatable-buttons td:not(:last-child) {
+        white-space: nowrap;
+    }
+    #datatable-buttons th:last-child,
+    #datatable-buttons td:last-child {
+        white-space: normal !important;
+        min-width: 220px;
+    }
+    #datatable-buttons th:nth-child(1) { width: 14%; }
+    #datatable-buttons th:nth-child(2) { width: 12%; }
+    #datatable-buttons th:nth-child(3) { width: 12%; }
+    #datatable-buttons th:nth-child(4) { width: 16%; }
+    #datatable-buttons th:nth-child(5) { width: 10%; }
+    #datatable-buttons th:nth-child(6) { width: 12%; }
+    #datatable-buttons th:nth-child(7) { width: 12%; }
+    #datatable-buttons th:nth-child(8) { width: 12%; }
     table.dataTable.dtr-inline.collapsed > tbody > tr[role="row"] > td:first-child:before,
     table.dataTable.dtr-inline.collapsed > tbody > tr[role="row"] > th:first-child:before {
         display: none !important;
@@ -74,6 +89,35 @@
         color: #3e2412;
         font-weight: 600;
         word-break: break-word;
+    }
+    .employee-edit-modal .modal-content {
+        border: 0;
+        border-radius: 16px;
+        overflow: hidden;
+    }
+    .employee-edit-modal .edit-modal-hero {
+        background: linear-gradient(135deg, #5a3d2e 0%, #8B5A2B 100%);
+        color: #fff;
+        padding: 1rem 1.25rem;
+    }
+    .employee-edit-modal .edit-modal-hero h5 {
+        font-weight: 700;
+        letter-spacing: 0.02em;
+    }
+    .employee-edit-modal .edit-section-title {
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #8a6a55;
+        font-weight: 700;
+        margin: 1.25rem 0 0.65rem;
+    }
+    .employee-edit-modal .edit-section-title:first-of-type {
+        margin-top: 0;
+    }
+    .employee-edit-modal .form-control:focus {
+        border-color: #b66a33;
+        box-shadow: 0 0 0 0.15rem rgba(139, 90, 43, 0.18);
     }
 </style>
 @endsection
@@ -138,7 +182,8 @@
                                                     </div>
                                                 </div>
 
-                                                <table id="datatable-buttons" class="table table-striped table-bordered nowrap" style="border-collapse: collapse; border-spacing: 0; width: 100%;">
+                                                <div class="table-responsive employee-list-table-wrap">
+                                                <table id="datatable-buttons" class="table table-striped table-bordered" style="border-collapse: collapse; border-spacing: 0; width: 100%;">
                                         
                                                     <thead>
                                                     <tr>
@@ -146,6 +191,7 @@
                                                         <th data-priority="2">Position</th>
                                                         <th data-priority="3">Department</th>
                                                         <th data-priority="4">Email</th>
+                                                        <th data-priority="4">Role</th>
                                                         <th data-priority="4">Schedule</th>
                                                         <th data-priority="5">Member Since</th>
                                                         <th data-priority="1">Actions</th>
@@ -161,7 +207,19 @@
                                                             <td>
                                                                 {{ $employee->department?->name ?? 'N/A' }}
                                                             </td>
-                                                            <td>{{$employee->email}}</td>
+                                                            <td>{{ $employee->email ?: '—' }}</td>
+                                                            <td>
+                                                                @php $loginUser = $employee->user; @endphp
+                                                                @if (!$loginUser)
+                                                                    <span class="text-muted">No login</span>
+                                                                @elseif ($loginUser->hasRole('secretary'))
+                                                                    <span class="badge badge-info">Secretary</span>
+                                                                @elseif ($loginUser->hasRole('employee'))
+                                                                    <span class="badge badge-secondary">Employee</span>
+                                                                @else
+                                                                    <span class="badge badge-dark" title="Managed under User Management">{{ $loginUser->roles->first()->name ?? 'User' }}</span>
+                                                                @endif
+                                                            </td>
                                                             <td>
                                                                 @if(isset($employee->schedules->first()->slug))
                                                                 {{$employee->schedules->first()->slug}}
@@ -180,12 +238,11 @@
                                                    
                                                     </tbody>
                                                 </table>
-                                            </div>
-                                        </div>
+                                                </div>
                                     </div>
                                 </div>
-                            </div> <!-- end col -->
-                        </div> <!-- end row -->    
+                            </div>
+                        </div>
                                     
 
 @foreach( $employees as $employee)
@@ -382,9 +439,28 @@
             return addEmpShowRequired('department_id') ? 'Please select a department.' : '';
         }
 
-        function validateAddEmpSchedule(value) {
-            if (value) return '';
-            return addEmpShowRequired('schedule') ? 'Please select a schedule.' : '';
+        function validateAddEmpScheduleDeptSecretary() {
+            var roleEl = addEmpField('portal_role');
+            var deptEl = addEmpField('schedule_department_key');
+            if (!roleEl || !deptEl) return '';
+            if (roleEl.value !== 'secretary') return '';
+            if (deptEl.value) return '';
+            if (addEmpSubmitAttempted || addEmpTouched['schedule_department_key'] || addEmpTouched['portal_role']) {
+                return 'Choose IT, EDUC, or SHTM for department management.';
+            }
+            return '';
+        }
+
+        function syncAddSecretaryManagedWrap() {
+            var roleEl = addEmpField('portal_role');
+            var wrap = document.getElementById('add_secretary_managed_wrap');
+            if (!wrap || !roleEl) return;
+            var show = roleEl.value === 'secretary';
+            wrap.style.display = show ? '' : 'none';
+            var dept = document.getElementById('add_emp_managed_dept');
+            if (dept && !show) {
+                dept.value = '';
+            }
         }
 
         function validateAddEmpPassword(value) {
@@ -423,7 +499,6 @@
             const depEl = addEmpField('department_id');
             const emEl = addEmpField('email');
             const passEl = addEmpField('password');
-            const schEl = addEmpField('schedule');
 
             addEmpSetError('surname', surnameEl ? validateAddEmpSurname(surnameEl.value) : '');
             addEmpSetError('first_name', firstEl ? validateAddEmpFirstName(firstEl.value) : '');
@@ -433,8 +508,9 @@
             addEmpSetError('department_id', depEl ? validateAddEmpDepartment(depEl.value) : '');
             addEmpSetError('password', passEl ? validateAddEmpPassword(passEl.value) : '');
             addEmpSetError('email', validateAddEmpEmail(emEl ? emEl.value : '', passEl ? passEl.value : ''));
-            addEmpSetError('schedule', schEl ? validateAddEmpSchedule(schEl.value) : '');
+            addEmpSetError('schedule_department_key', validateAddEmpScheduleDeptSecretary());
             addEmpSetError('face', validateAddEmpFace());
+            syncAddSecretaryManagedWrap();
         }
 
         function addEmployeeFormHasErrors() {
@@ -477,7 +553,7 @@
             });
         });
 
-        ['department_id', 'schedule'].forEach(function (fieldName) {
+        ['department_id', 'schedule_department_key', 'portal_role'].forEach(function (fieldName) {
             const el = addEmpField(fieldName);
             if (!el) return;
             el.addEventListener('blur', function () {
@@ -495,6 +571,10 @@
                 window.resetAddEmployeeValidation();
             }, 0);
         });
+
+        if (employeeForm) {
+            syncAddSecretaryManagedWrap();
+        }
     })();
 
     // Load face-api models
@@ -634,6 +714,13 @@
         if (typeof window.resetAddEmployeeValidation === 'function') {
             window.resetAddEmployeeValidation();
         }
+        var dh = document.getElementById('add_emp_date_hired');
+        if (dh && !dh.value) {
+            dh.value = new Date().toISOString().slice(0, 10);
+        }
+        if (typeof window.refreshEmployeeAddValidation === 'function') {
+            window.refreshEmployeeAddValidation();
+        }
     });
 
     // Stop camera when modal is closed
@@ -644,7 +731,7 @@
         }
         if (startCameraBtn) {
             startCameraBtn.disabled = false;
-            startCameraBtn.innerHTML = '<i class="fa fa-camera"></i> Start Camera';
+            startCameraBtn.innerHTML = '<i class="fa fa-camera"></i> Start camera';
         }
         if (captureFaceBtn) captureFaceBtn.disabled = true;
         if (retakeFaceBtn) retakeFaceBtn.style.display = 'none';

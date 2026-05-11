@@ -43,8 +43,16 @@ class EmployeeRec extends FormRequest
             'emergency_contact_name' => ['nullable', 'string', 'max:255'],
             'emergency_contact_relationship' => ['nullable', 'string', 'max:255'],
             'emergency_contact_phone' => ['nullable', 'string', 'max:30'],
-            'schedule' => 'required|exists:schedules,slug',
-            'schedule_department_key' => ['nullable', 'string', 'in:IT,EDUC,SHTM'],
+            'schedule' => $this->routeIs('employees.store')
+                ? ['nullable', 'exists:schedules,slug']
+                : ['required', 'exists:schedules,slug'],
+            'portal_role' => ['required', 'in:employee,secretary'],
+            'schedule_department_key' => [
+                'nullable',
+                'string',
+                'in:IT,EDUC,SHTM',
+                Rule::requiredIf(fn () => $this->input('portal_role') === 'secretary'),
+            ],
             'rotation_start_date' => ['nullable', 'date'],
             'rotation_pattern' => ['nullable', 'string', 'max:255'],
             'password' => ['nullable', 'string', 'min:8'],
@@ -59,6 +67,7 @@ class EmployeeRec extends FormRequest
             'email.required' => 'Email is required when a login password is set.',
             'password.min' => 'Password must be at least 8 characters.',
             'phone.regex' => 'Phone number must be in +63 format (e.g. +639xxxxxxxxx).',
+            'schedule_department_key.required' => 'Choose which department (IT, EDUC, or SHTM) this secretary will manage.',
         ];
     }
 }

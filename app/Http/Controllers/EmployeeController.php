@@ -26,9 +26,8 @@ class EmployeeController extends Controller
    
     public function index()
     {
-        
         return view('admin.employee')->with([
-            'employees' => Employee::with('department')->get(),
+            'employees' => Employee::with(['department', 'user.roles'])->get(),
             'schedules' => Schedule::all(),
             'departments' => Department::query()->orderBy('name')->get(),
         ]);
@@ -49,9 +48,14 @@ class EmployeeController extends Controller
         $employee->department_id = $request->department_id;
         // Keep legacy string column aligned for older screens/exports
         $employee->department = $deptName;
-        $employee->schedule_department_key = $request->input('schedule_department_key') ?: null;
+        $employee->schedule_department_key = $request->input('portal_role') === 'secretary'
+            ? ($request->input('schedule_department_key') ?: null)
+            : null;
         $this->fillProfileDetails($employee, $request);
-        
+        if (!$employee->date_hired) {
+            $employee->date_hired = now()->toDateString();
+        }
+
         // Face recognition data
         if ($request->face_descriptor) {
             $employee->face_descriptor = $request->face_descriptor;
@@ -60,13 +64,13 @@ class EmployeeController extends Controller
         if ($request->face_image) {
             $employee->face_image = $request->face_image;
         }
-        
+
         $employee->save();
 
-        if($request->schedule){
-
-            $schedule = Schedule::whereSlug($request->schedule)->first();
-
+        $schedule = $request->filled('schedule')
+            ? Schedule::whereSlug($request->schedule)->first()
+            : Schedule::query()->orderBy('id')->first();
+        if ($schedule) {
             $employee->schedules()->attach($schedule);
 
             if (($schedule->schedule_type ?? 'fixed') === 'shifting') {
@@ -86,19 +90,17 @@ class EmployeeController extends Controller
             }
         }
 
-        // Create user account with login credentials if provided
         if ($request->password) {
             $user = new User();
             $user->name = $request->name;
             $user->email = $request->email;
             $user->password = bcrypt($request->password);
             $user->save();
-            
-            // Assign employee role to user
-            $employeeRole = Role::where('slug', 'employee')->first();
-            if ($employeeRole) {
-                $user->roles()->attach($employeeRole);
-            }
+            $this->applyPortalRoleToUser(
+                $user,
+                (string) $request->input('portal_role', 'employee'),
+                $request->input('schedule_department_key') ?: null
+            );
         }
 
         // $role = Role::whereSlug('emp')->first();
@@ -170,18 +172,31 @@ class EmployeeController extends Controller
             }
         }
 
-        // Sync linked user account by email (if one exists)
         $user = User::where('email', $oldEmail)->first();
         if (!$user && $request->email) {
             $user = User::where('email', $request->email)->first();
         }
-        if ($user) {
+        if (!$user && $request->filled('email') && $request->filled('password')) {
+            $user = new User();
+            $user->name = $request->name;
+            $user->email = $request->email;
+            $user->password = bcrypt($request->password);
+            $user->save();
+        } elseif ($user) {
             $user->name = $request->name;
             $user->email = $request->email;
             if ($request->filled('password')) {
                 $user->password = bcrypt($request->password);
             }
             $user->save();
+        }
+
+        if ($user) {
+            $this->applyPortalRoleToUser(
+                $user,
+                (string) $request->input('portal_role', 'employee'),
+                $request->input('schedule_department_key') ?: null
+            );
         }
 
         flash()->success('Success','Employee Record has been Updated successfully !');
@@ -205,5 +220,38 @@ class EmployeeController extends Controller
         $employee->delete();
         flash()->success('Success','Employee Record has been Deleted successfully !');
         return redirect()->route('employees.index')->with('success');
+    }
+
+    private function ensurePortalRolesExist(): void
+    {
+        Role::firstOrCreate(['slug' => 'employee'], ['name' => 'Employee']);
+        Role::firstOrCreate(['slug' => 'secretary'], ['name' => 'Department Secretary']);
+    }
+
+    private function applyPortalRoleToUser(User $user, string $portalRole, ?string $scheduleDeptKey): void
+    {
+        $this->ensurePortalRolesExist();
+        $user->loadMissing('roles');
+        $slugs = $user->roles->pluck('slug')->all();
+        $onlyEmployeeOrSecretary = empty($slugs)
+            || collect($slugs)->every(fn ($slug) => in_array($slug, ['employee', 'secretary'], true));
+        if (!$onlyEmployeeOrSecretary) {
+            return;
+        }
+
+        $targetSlug = $portalRole === 'secretary' ? 'secretary' : 'employee';
+        $role = Role::where('slug', $targetSlug)->first();
+        if (!$role) {
+            return;
+        }
+
+        if ($targetSlug === 'secretary' && $scheduleDeptKey) {
+            $user->managed_schedule_department = strtoupper($scheduleDeptKey);
+        } else {
+            $user->managed_schedule_department = null;
+        }
+
+        $user->save();
+        $user->roles()->sync([$role->id]);
     }
 }
