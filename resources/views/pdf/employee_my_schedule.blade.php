@@ -39,8 +39,9 @@
                 <th>COURSE DESCRIPTION</th>
                 <th style="width: 12%;">DAY/S</th>
                 <th style="width: 22%;">TIME</th>
-                <th style="width: 12%;">ROOM</th>
-                <th style="width: 18%;">FACULTY</th>
+                <th style="width: 10%;">ROOM</th>
+                <th style="width: 12%;">SECTION</th>
+                <th style="width: 16%;">FACULTY</th>
             </tr>
         </thead>
         <tbody>
@@ -55,11 +56,12 @@
                         @endforeach
                     </td>
                     <td class="center">{{ $row['room'] }}</td>
+                    <td class="center">{{ $row['section_label'] ?: '—' }}</td>
                     <td class="center">{{ $employee->name }}</td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="6" class="center">No entries.</td>
+                    <td colspan="7" class="center">No entries.</td>
                 </tr>
             @endforelse
         </tbody>

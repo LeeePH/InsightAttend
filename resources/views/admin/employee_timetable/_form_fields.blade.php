@@ -33,9 +33,32 @@
 </div>
 
 <div class="form-row">
+    <div class="form-group col-md-12">
+        <label>Class section</label>
+        <select name="class_section_id" class="form-control js-timetable-class-section" @if(($classSections ?? collect())->isNotEmpty()) required @endif>
+            <option value="">- Select section -</option>
+            @foreach(($classSections ?? collect()) as $sec)
+                <option
+                    value="{{ $sec->id }}"
+                    data-department="{{ $sec->department_key }}"
+                    {{ (int) old('class_section_id', $entry->class_section_id ?? 0) === (int) $sec->id ? 'selected' : '' }}
+                >
+                    {{ $sec->section_label }}
+                    @if($sec->year_level)
+                        (Y{{ $sec->year_level }})
+                    @endif
+                    — {{ $sec->department_key }}
+                </option>
+            @endforeach
+        </select>
+        <small class="text-muted">Manage sections under <a href="{{ route('class_sections.index') }}" target="_blank">Class sections</a>.</small>
+    </div>
+</div>
+
+<div class="form-row">
     <div class="form-group col-md-4">
         <label>Scheduling Department</label>
-        <select name="department_key" class="form-control" required>
+        <select name="department_key" class="form-control js-timetable-department-key" required>
             @foreach(\App\Services\SchedulingDepartmentService::KEYS as $k)
                 <option value="{{ $k }}" {{ old('department_key', $entry->department_key ?? '') === $k ? 'selected' : '' }}>{{ $k }}</option>
             @endforeach

@@ -2,14 +2,15 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Employee schedule</title>
+    <title>Section schedule</title>
     <style>
         * { box-sizing: border-box; }
         body { font-family: DejaVu Sans, sans-serif; font-size: 10px; color: #111; }
         .header { text-align: center; margin-bottom: 10px; }
         .school-name { font-size: 17px; font-weight: 800; margin-bottom: 2px; }
         .school-address { font-size: 9px; color: #333; margin-bottom: 4px; }
-        .dept-title { font-size: 13px; font-weight: 800; margin-bottom: 3px; text-transform: uppercase; }
+        .section-title { font-size: 15px; font-weight: 800; margin-bottom: 2px; text-transform: uppercase; }
+        .section-meta { font-size: 10px; font-weight: 700; margin-bottom: 6px; color: #333; }
         .term-line { font-size: 10px; font-weight: 700; margin-bottom: 8px; }
         .meta { font-size: 8px; color: #555; margin-top: 3px; }
         table.grid { width: 100%; border-collapse: collapse; margin-top: 8px; }
@@ -23,18 +24,17 @@
 <body>
     @php
         $settings = $exportSettings ?? [];
-        $deptKey = $selectedDepartmentKey ?: null;
+        $deptKey = strtoupper((string) ($classSection->department_key ?? ''));
         $deptTitle = $deptKey && isset($departmentTitles[$deptKey])
             ? $departmentTitles[$deptKey]
-            : 'All Departments';
-
-        $grouped = $entries;
+            : $deptKey;
     @endphp
 
     <div class="header">
-        <div class="school-name">{{ $settings['school_name'] ?? 'Colegio de Sta. Teresa De Avila' }}</div>
+        <div class="school-name">{{ $settings['school_name'] ?? 'School' }}</div>
         <div class="school-address">{{ $settings['school_address'] ?? '' }}</div>
-        <div class="dept-title">{{ $deptTitle }}</div>
+        <div class="section-title">Class section: {{ $classSection->section_label }}</div>
+        <div class="section-meta">{{ $deptTitle }}@if($classSection->year_level) · Year {{ $classSection->year_level }}@endif</div>
         <div class="term-line">{{ $settings['semester_label'] ?? '1st Semester' }} | S.Y. {{ $settings['school_year'] ?? now()->format('Y').'-'.now()->addYear()->format('Y') }}</div>
         <div class="meta">Generated {{ $generatedAt->format('F j, Y g:i A') }}</div>
     </div>
@@ -43,16 +43,15 @@
         <thead>
             <tr>
                 <th style="width:10%;">CODE</th>
-                <th style="width:26%;">COURSE DESCRIPTION</th>
+                <th style="width:24%;">COURSE DESCRIPTION</th>
                 <th style="width:10%;">DAY/S</th>
-                <th style="width:18%;">TIME</th>
+                <th style="width:16%;">TIME</th>
                 <th style="width:10%;">ROOM</th>
-                <th style="width:10%;">SECTION</th>
-                <th style="width:20%;">FACULTY</th>
+                <th style="width:30%;">FACULTY</th>
             </tr>
         </thead>
         <tbody>
-            @forelse($grouped as $row)
+            @forelse($entries as $row)
                 @php
                     $times = collect($row->resolvedTimeBlocks())->map(function ($block) {
                         return \Carbon\Carbon::parse($block['time_start'])->format('g:i A') . '-' . \Carbon\Carbon::parse($block['time_end'])->format('g:i A');
@@ -68,11 +67,10 @@
                         @endforeach
                     </td>
                     <td class="c">{{ $row->room }}</td>
-                    <td class="c">{{ $row->classSection?->section_label ?? '—' }}</td>
                     <td class="l">{{ $row->employee->name }}</td>
                 </tr>
             @empty
-                <tr><td colspan="7" class="c">No entries.</td></tr>
+                <tr><td colspan="6" class="c">No entries for this section.</td></tr>
             @endforelse
         </tbody>
     </table>

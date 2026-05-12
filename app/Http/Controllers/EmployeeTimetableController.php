@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ClassSection;
 use App\Models\Course;
 use App\Models\Employee;
 use App\Models\EmployeeTimetableEntry;
@@ -14,6 +15,7 @@ use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -98,12 +100,13 @@ class EmployeeTimetableController extends Controller
                     'department_key' => $entry->department_key,
                     'course_code' => $entry->course?->code,
                     'course_name' => $entry->course?->name,
+                    'section_label' => $entry->classSection?->section_label,
                     'faculty_name' => $entry->employee?->name,
                     'times' => $times,
                     'time_start' => $times->first()['start'] ?? '00:00',
                 ];
             })
-            ->sortBy(fn ($row) => sprintf('%02d|%s|%s|%s', $row['day_of_week'], $row['time_start'], $row['room'], $row['course_code']))
+            ->sortBy(fn ($row) => sprintf('%02d|%s|%s|%s|%s', $row['day_of_week'], $row['time_start'], $row['room'], $row['course_code'], $row['section_label'] ?? ''))
             ->values();
     }
 
@@ -122,7 +125,7 @@ class EmployeeTimetableController extends Controller
         $user = $request->user();
         $this->assertScheduler($user);
 
-        $query = EmployeeTimetableEntry::with(['employee.department', 'course'])
+        $query = EmployeeTimetableEntry::with(['employee.department', 'course', 'classSection'])
             ->orderBy('department_key')
             ->orderBy('employee_id')
             ->orderBy('day_of_week')
@@ -156,6 +159,12 @@ class EmployeeTimetableController extends Controller
         $departmentLabels = SchedulingDepartmentService::labels();
         $courses = Course::query()->orderBy('code')->orderBy('name')->get();
 
+        $classSectionsQuery = ClassSection::query()->orderBy('department_key')->orderBy('year_level')->orderBy('section_label');
+        if ($user->hasRole('secretary')) {
+            $classSectionsQuery->where('department_key', strtoupper((string) $user->managed_schedule_department));
+        }
+        $classSections = $classSectionsQuery->get();
+
         $todayEntries = $entries->filter(function (EmployeeTimetableEntry $row) use ($todayDow) {
             return (int) $row->day_of_week === $todayDow;
         });
@@ -164,6 +173,7 @@ class EmployeeTimetableController extends Controller
             'entries' => $entries,
             'employees' => $employees,
             'courses' => $courses,
+            'classSections' => $classSections,
             'todayDow' => $todayDow,
             'todayEntries' => $todayEntries,
             'departmentLabels' => $departmentLabels,
@@ -179,6 +189,7 @@ class EmployeeTimetableController extends Controller
         $validated = $request->validate([
             'employee_id' => ['required', 'exists:employees,id'],
             'course_id' => ['required', 'exists:courses,id'],
+            'class_section_id' => ['nullable', 'exists:class_sections,id'],
             'day_of_week' => ['required', 'integer', 'min:1', 'max:7'],
             'time_start_blocks' => ['required', 'array', 'min:1'],
             'time_start_blocks.*' => ['nullable', 'date_format:H:i'],
@@ -203,6 +214,24 @@ class EmployeeTimetableController extends Controller
             return back()->withInput()->withErrors([
                 'department_key' => 'Department must match the employee\'s scheduling department ('.$resolved.').',
             ]);
+        }
+
+        $sectionsExist = ClassSection::query()->where('department_key', $deptKey)->exists();
+        $classSectionId = $validated['class_section_id'] ?? null;
+        if ($sectionsExist && !$classSectionId) {
+            return back()->withInput()->withErrors([
+                'class_section_id' => 'Select a class section (create one under Class sections if needed).',
+            ]);
+        }
+
+        $classSection = null;
+        if ($classSectionId) {
+            $classSection = ClassSection::findOrFail((int) $classSectionId);
+            if (strtoupper((string) $classSection->department_key) !== $deptKey) {
+                return back()->withInput()->withErrors([
+                    'class_section_id' => 'Class section must belong to scheduling department '.$deptKey.'.',
+                ]);
+            }
         }
 
         try {
@@ -236,6 +265,7 @@ class EmployeeTimetableController extends Controller
         EmployeeTimetableEntry::create([
             'employee_id' => $employee->id,
             'course_id' => $validated['course_id'],
+            'class_section_id' => $classSection?->id,
             'day_of_week' => (int) $validated['day_of_week'],
             'time_start' => $blocks[0]['time_start'],
             'time_end' => $blocks[count($blocks) - 1]['time_end'],
@@ -257,6 +287,7 @@ class EmployeeTimetableController extends Controller
         $validated = $request->validate([
             'employee_id' => ['required', 'exists:employees,id'],
             'course_id' => ['required', 'exists:courses,id'],
+            'class_section_id' => ['nullable', 'exists:class_sections,id'],
             'day_of_week' => ['required', 'integer', 'min:1', 'max:7'],
             'time_start_blocks' => ['required', 'array', 'min:1'],
             'time_start_blocks.*' => ['nullable', 'date_format:H:i'],
@@ -277,6 +308,24 @@ class EmployeeTimetableController extends Controller
             return back()->withInput()->withErrors([
                 'department_key' => 'Department must match the employee\'s scheduling department.',
             ]);
+        }
+
+        $sectionsExist = ClassSection::query()->where('department_key', $deptKey)->exists();
+        $classSectionId = $validated['class_section_id'] ?? null;
+        if ($sectionsExist && !$classSectionId) {
+            return back()->withInput()->withErrors([
+                'class_section_id' => 'Select a class section (create one under Class sections if needed).',
+            ]);
+        }
+
+        $classSection = null;
+        if ($classSectionId) {
+            $classSection = ClassSection::findOrFail((int) $classSectionId);
+            if (strtoupper((string) $classSection->department_key) !== $deptKey) {
+                return back()->withInput()->withErrors([
+                    'class_section_id' => 'Class section must belong to scheduling department '.$deptKey.'.',
+                ]);
+            }
         }
 
         try {
@@ -310,6 +359,7 @@ class EmployeeTimetableController extends Controller
         $entry->update([
             'employee_id' => $employee->id,
             'course_id' => $validated['course_id'],
+            'class_section_id' => $classSection?->id,
             'day_of_week' => (int) $validated['day_of_week'],
             'time_start' => $blocks[0]['time_start'],
             'time_end' => $blocks[count($blocks) - 1]['time_end'],
@@ -340,7 +390,7 @@ class EmployeeTimetableController extends Controller
         $user = $request->user();
         $this->assertScheduler($user);
 
-        $query = EmployeeTimetableEntry::with(['employee.department', 'course'])
+        $query = EmployeeTimetableEntry::with(['employee.department', 'course', 'classSection'])
             ->orderBy('department_key')
             ->orderBy('course_id')
             ->orderBy('day_of_week')
@@ -374,6 +424,32 @@ class EmployeeTimetableController extends Controller
         return $pdf->download('employee-schedule-'.now()->format('Y-m-d').'.pdf');
     }
 
+    public function sectionPdf(Request $request, ClassSection $classSection): Response
+    {
+        $user = $request->user();
+        $this->assertScheduler($user);
+        abort_unless($this->canEditDepartment($user, $classSection->department_key), 403);
+
+        $entries = EmployeeTimetableEntry::with(['employee.department', 'course', 'classSection'])
+            ->where('class_section_id', $classSection->id)
+            ->orderBy('day_of_week')
+            ->orderBy('time_start')
+            ->get();
+
+        $pdf = Pdf::loadView('pdf.employee_timetable_section', [
+            'classSection' => $classSection,
+            'entries' => $entries,
+            'exportSettings' => $this->timetableExportSettings(),
+            'departmentTitles' => SchedulingDepartmentService::schoolTitles(),
+            'generatedAt' => now(),
+            'dayShort' => fn (int $d) => $this->dayShort($d),
+        ])->setPaper('a4', 'landscape');
+
+        $slug = Str::slug($classSection->section_label) ?: 'section';
+
+        return $pdf->download('section-schedule-'.$slug.'-'.now()->format('Y-m-d').'.pdf');
+    }
+
     public function mySchedule(Request $request): View
     {
         $user = $request->user();
@@ -382,7 +458,7 @@ class EmployeeTimetableController extends Controller
         $employee = $user->employee;
         abort_unless($employee, 404, 'No employee profile is linked to this account.');
 
-        $entries = EmployeeTimetableEntry::with(['employee', 'course'])
+        $entries = EmployeeTimetableEntry::with(['employee', 'course', 'classSection'])
             ->where('employee_id', $employee->id)
             ->orderBy('day_of_week')
             ->orderBy('time_start')
@@ -404,7 +480,7 @@ class EmployeeTimetableController extends Controller
         $employee = $user->employee;
         abort_unless($employee, 404, 'No employee profile is linked to this account.');
 
-        $entries = EmployeeTimetableEntry::with(['employee', 'course'])
+        $entries = EmployeeTimetableEntry::with(['employee', 'course', 'classSection'])
             ->where('employee_id', $employee->id)
             ->orderBy('day_of_week')
             ->orderBy('time_start')
@@ -426,7 +502,7 @@ class EmployeeTimetableController extends Controller
         $employee = $user->employee;
         abort_unless($employee, 404, 'No employee profile is linked to this account.');
 
-        $entries = EmployeeTimetableEntry::with(['employee', 'course'])
+        $entries = EmployeeTimetableEntry::with(['employee', 'course', 'classSection'])
             ->where('employee_id', $employee->id)
             ->orderBy('day_of_week')
             ->orderBy('time_start')

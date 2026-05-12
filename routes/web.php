@@ -173,7 +173,12 @@ Route::group(['middleware' => ['auth', 'Role'], 'roles' => ['admin']], function 
 });
 
 Route::group(['middleware' => ['auth', 'Role'], 'roles' => ['admin', 'hr', 'secretary']], function () {
+    Route::get('/employee-timetable/pdf/section/{classSection}', '\App\Http\Controllers\EmployeeTimetableController@sectionPdf')->name('employee_timetable.section_pdf');
     Route::get('/employee-timetable/pdf', '\App\Http\Controllers\EmployeeTimetableController@pdf')->name('employee_timetable.pdf');
+    Route::get('/class-sections', '\App\Http\Controllers\ClassSectionController@index')->name('class_sections.index');
+    Route::post('/class-sections', '\App\Http\Controllers\ClassSectionController@store')->name('class_sections.store');
+    Route::put('/class-sections/{classSection}', '\App\Http\Controllers\ClassSectionController@update')->name('class_sections.update');
+    Route::delete('/class-sections/{classSection}', '\App\Http\Controllers\ClassSectionController@destroy')->name('class_sections.destroy');
     Route::get('/employee-timetable', '\App\Http\Controllers\EmployeeTimetableController@index')->name('employee_timetable.index');
     Route::post('/employee-timetable', '\App\Http\Controllers\EmployeeTimetableController@store')->name('employee_timetable.store');
     Route::put('/employee-timetable/{entry}', '\App\Http\Controllers\EmployeeTimetableController@update')->name('employee_timetable.update');

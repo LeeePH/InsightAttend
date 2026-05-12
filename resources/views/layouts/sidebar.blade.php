@@ -31,6 +31,11 @@
                                 </a>
                             </li>
                             <li class="">
+                                <a href="{{ route('class_sections.index') }}" class="waves-effect {{ request()->is('class-sections') ? 'mm active' : '' }}">
+                                    <i class="ti-bookmark-alt"></i> <span> Class sections </span>
+                                </a>
+                            </li>
+                            <li class="">
                                 <a href="{{ route('departments.report') }}" class="waves-effect {{ request()->is('department-reports') ? 'mm active' : '' }}">
                                     <i class="ti-layers"></i> <span> Department Management </span>
                                 </a>
@@ -131,6 +136,11 @@
                             <li class="">
                                 <a href="{{ route('employee_timetable.index') }}" class="waves-effect {{ request()->is("employee-timetable") || request()->is("employee-timetable/*") ? "mm active" : "" }}">
                                     <i class="ti-layout-grid3-alt"></i> <span> Schedule Management </span>
+                                </a>
+                            </li>
+                            <li class="">
+                                <a href="{{ route('class_sections.index') }}" class="waves-effect {{ request()->is('class-sections') ? 'mm active' : '' }}">
+                                    <i class="ti-bookmark-alt"></i> <span> Class sections </span>
                                 </a>
                             </li>
                             @if(auth()->user()->hasRole('hr'))

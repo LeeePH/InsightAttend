@@ -72,6 +72,7 @@
                             <th>Day</th>
                             <th>Time</th>
                             <th>Room</th>
+                            <th>Section</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -86,10 +87,11 @@
                                     @endforeach
                                 </td>
                                 <td>{{ $row['room'] }}</td>
+                                <td>{{ $row['section_label'] ?: '—' }}</td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="text-center text-muted py-4">No timetable entries have been published for your account yet.</td>
+                                <td colspan="6" class="text-center text-muted py-4">No timetable entries have been published for your account yet.</td>
                             </tr>
                         @endforelse
                     </tbody>

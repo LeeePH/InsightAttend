@@ -162,8 +162,9 @@
                         <th>Course Description</th>
                         <th style="width: 12%;">Day/s</th>
                         <th style="width: 22%;">Time</th>
-                        <th style="width: 12%;">Room</th>
-                        <th style="width: 18%;">Faculty</th>
+                        <th style="width: 10%;">Room</th>
+                        <th style="width: 12%;">Section</th>
+                        <th style="width: 16%;">Faculty</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -178,11 +179,12 @@
                                 @endforeach
                             </td>
                             <td style="text-align:center;">{{ $row['room'] }}</td>
+                            <td style="text-align:center;">{{ $row['section_label'] ?: '—' }}</td>
                             <td style="text-align:center;">{{ $employee->name }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="empty">No schedule entries are available for preview yet.</td>
+                            <td colspan="7" class="empty">No schedule entries are available for preview yet.</td>
                         </tr>
                     @endforelse
                 </tbody>

@@ -72,6 +72,13 @@
         </div>
     @endif
 
+    @if($classSections->isEmpty())
+        <div class="alert alert-warning">
+            No <strong>class sections</strong> are defined yet. Add sections (e.g. BSIT 1-1) under
+            <a href="{{ route('class_sections.index') }}" class="alert-link">Class sections</a> before creating timetable rows.
+        </div>
+    @endif
+
     <div class="row mb-3">
         <div class="col-md-8">
             <div class="today-strip">
@@ -82,7 +89,8 @@
                     <ul class="mb-0 mt-2 pl-3">
                         @foreach($todayEntries as $te)
                             <li>
-                                {{ $te->employee->name }} -
+                                {{ $te->employee->name }} —
+                                {{ $te->classSection?->section_label ?? 'Section n/a' }} —
                                 {{ collect($te->resolvedTimeBlocks())->map(fn ($block) => \Carbon\Carbon::parse($block['time_start'])->format('g:i A') . '-' . \Carbon\Carbon::parse($block['time_end'])->format('g:i A'))->implode(', ') }},
                                 {{ $te->room }} ({{ $te->department_key }})
                             </li>
@@ -105,6 +113,17 @@
             <a href="{{ route('employee_timetable.pdf', request()->only('department_key')) }}" class="btn btn-sm btn-primary mb-2" style="background:#8B4513;border-color:#6b3410;">
                 Download PDF
             </a>
+            @if($classSections->isNotEmpty())
+                <div class="d-inline-block mb-2 ml-1">
+                    <select class="form-control form-control-sm d-inline-block" style="width:auto;min-width:11rem;" onchange="if(this.value) window.location.href=this.value">
+                        <option value="">Section PDF…</option>
+                        @foreach($classSections as $sec)
+                            <option value="{{ route('employee_timetable.section_pdf', $sec) }}">{{ $sec->section_label }} ({{ $sec->department_key }})</option>
+                        @endforeach
+                    </select>
+                </div>
+            @endif
+            <a href="{{ route('class_sections.index', request()->only('department_key')) }}" class="btn btn-sm btn-outline-secondary mb-2 ml-1">Class sections</a>
             <button type="button" class="btn btn-sm btn-primary mb-2" style="background:#a0522d;border-color:#6b3410;" data-toggle="modal" data-target="#addTimetableModal">
                 Add entry
             </button>
@@ -122,6 +141,7 @@
                             <th style="width:80px;">Day/s</th>
                             <th style="min-width:150px;">Time</th>
                             <th style="min-width:90px;">Room</th>
+                            <th style="min-width:110px;">Section</th>
                             <th style="min-width:170px;">Faculty</th>
                             <th style="width:120px;">Actions</th>
                         </tr>
@@ -144,6 +164,7 @@
                                     @endforeach
                                 </td>
                                 <td class="col-center">{{ $row->room }}</td>
+                                <td class="col-center">{{ $row->classSection?->section_label ?? '—' }}</td>
                                 <td class="col-emp">{{ $row->employee->name }}</td>
                                 <td class="col-center">
                                     <button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#editTimetableModal{{ $row->id }}">Edit</button>
@@ -156,7 +177,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center text-muted py-4">No timetable entries yet. Use "Add entry" to create the first row.</td>
+                                <td colspan="8" class="text-center text-muted py-4">No timetable entries yet. Use "Add entry" to create the first row.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -175,7 +196,7 @@
                         <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                     </div>
                     <div class="modal-body">
-                        @include('admin.employee_timetable._form_fields', ['employees' => $employees, 'courses' => $courses])
+                        @include('admin.employee_timetable._form_fields', ['employees' => $employees, 'courses' => $courses, 'classSections' => $classSections])
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
@@ -201,6 +222,7 @@
                             @include('admin.employee_timetable._form_fields', [
                                 'employees' => $employees,
                                 'courses' => $courses,
+                                'classSections' => $classSections,
                                 'entry' => $row,
                             ])
                         </div>
@@ -218,7 +240,41 @@
 @section('script')
 <script>
     (function () {
+        function bindDepartmentSectionFilter(container) {
+            var dept = container.querySelector('.js-timetable-department-key');
+            var sec = container.querySelector('.js-timetable-class-section');
+            if (!dept || !sec) return;
+
+            function sync() {
+                var dk = (dept.value || '').toUpperCase();
+                var current = sec.value;
+                var opts = sec.querySelectorAll('option[data-department]');
+                var firstOk = '';
+                opts.forEach(function (opt) {
+                    var od = (opt.getAttribute('data-department') || '').toUpperCase();
+                    var show = !dk || od === dk;
+                    opt.disabled = !show;
+                    if (show && !firstOk) {
+                        firstOk = opt.value;
+                    }
+                });
+                if (current) {
+                    var ok = Array.prototype.some.call(sec.options, function (o) {
+                        return o.value === current && !o.disabled;
+                    });
+                    if (ok) {
+                        return;
+                    }
+                }
+                sec.value = firstOk || '';
+            }
+
+            dept.addEventListener('change', sync);
+            sync();
+        }
+
         function bindContainer(container) {
+            bindDepartmentSectionFilter(container);
             var addBtn = container.querySelector('.js-add-time-block');
             var list = container.querySelector('.js-time-blocks');
             if (!addBtn || !list) return;
