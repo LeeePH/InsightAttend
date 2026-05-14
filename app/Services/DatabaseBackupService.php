@@ -199,11 +199,16 @@ class DatabaseBackupService
             fn ($table) => $table !== 'migrations'
         ));
 
-        DB::transaction(function () use ($driver, $tables) {
+        // Ensure audit_logs is cleared last (after users) to avoid FK issues
+        // when the middleware tries to log the reset action itself.
+        $ordered = array_values(array_filter($tables, fn ($t) => $t !== 'audit_logs'));
+        $ordered[] = 'audit_logs'; // clear audit_logs last, still inside FK-disabled block
+
+        DB::transaction(function () use ($driver, $ordered) {
             $this->disableForeignKeys($driver);
 
             try {
-                foreach ($tables as $table) {
+                foreach ($ordered as $table) {
                     DB::table($table)->delete();
                 }
             } finally {

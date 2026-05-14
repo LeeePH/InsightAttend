@@ -96,7 +96,7 @@
     .header-title,
     h1, h2, h3, h4, h5, h6,
     .page-title-box .page-title {
-        color: var(--brand-text);
+        color: white;
     }
 
     .text-muted,
@@ -150,4 +150,5 @@
     .page-title-box .breadcrumb a {
         color: var(--brand-primary);
     }
+
 </style>

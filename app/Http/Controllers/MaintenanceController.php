@@ -15,21 +15,8 @@ class MaintenanceController extends Controller
 {
     private const FIXED_SCHOOL_ADDRESS = '06 Kingfisher Street, Zabarte Subd., Kaligayahan, Novaliches, Quezon City';
 
-    private const DEFAULT_COURSES = [
-        ['code' => 'BSIT', 'name' => 'Bachelor of Science in Information Technology'],
-        ['code' => 'BSCS', 'name' => 'Bachelor of Science in Computer Science'],
-        ['code' => 'BSIS', 'name' => 'Bachelor of Science in Information Systems'],
-        ['code' => 'BEED', 'name' => 'Bachelor of Elementary Education'],
-        ['code' => 'BSED-ENG', 'name' => 'Bachelor of Secondary Education major in English'],
-        ['code' => 'BSED-MATH', 'name' => 'Bachelor of Secondary Education major in Mathematics'],
-        ['code' => 'BSHM', 'name' => 'Bachelor of Science in Hospitality Management'],
-        ['code' => 'BSTM', 'name' => 'Bachelor of Science in Tourism Management'],
-    ];
-
     public function formBuilder(): View
     {
-        $this->ensureDefaultCourses();
-
         $courses = Course::query()->orderBy('code')->orderBy('name')->get();
         TimetableSetting::setValue('school_address', self::FIXED_SCHOOL_ADDRESS);
 
@@ -157,16 +144,6 @@ class MaintenanceController extends Controller
         flash()->success('Success', 'Maintenance form submitted and employee status updated.');
 
         return back();
-    }
-
-    private function ensureDefaultCourses(): void
-    {
-        foreach (self::DEFAULT_COURSES as $course) {
-            Course::firstOrCreate(
-                ['code' => $course['code']],
-                ['name' => $course['name'], 'description' => null]
-            );
-        }
     }
 
     private function schoolYearOptions(): array

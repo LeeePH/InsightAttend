@@ -515,6 +515,6 @@ class EmployeeTimetableController extends Controller
             'dayShort' => fn (int $d) => $this->dayShort($d),
         ])->setPaper('a4', 'landscape');
 
-        return $pdf->download('my-schedule-'.str($employee->name)->slug('-').'-'.now()->format('Y-m-d').'.pdf');
+        return $pdf->download('my-schedule-'.Str::slug($employee->name, '-').'-'.now()->format('Y-m-d').'.pdf');
     }
 }

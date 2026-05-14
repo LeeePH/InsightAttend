@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ClassSection;
+use App\Models\Course;
 use App\Models\User;
 use App\Services\SchedulingDepartmentService;
 use Illuminate\Http\RedirectResponse;
@@ -51,10 +52,12 @@ class ClassSectionController extends Controller
 
         $sections = $query->get();
         $departmentLabels = SchedulingDepartmentService::labels();
+        $courses = Course::query()->orderBy('code')->orderBy('name')->get();
 
         return view('admin.class_sections.index', [
-            'sections' => $sections,
+            'sections'         => $sections,
             'departmentLabels' => $departmentLabels,
+            'courses'          => $courses,
         ]);
     }
 

@@ -148,6 +148,7 @@ Route::group(['middleware' => ['auth', 'Role'], 'roles' => ['admin']], function 
 
     Route::resource('/departments', '\App\Http\Controllers\DepartmentController');
     Route::get('/department-reports', '\App\Http\Controllers\DepartmentReportController@index')->name('departments.report');
+    Route::get('/departments/{department}/employees', '\App\Http\Controllers\DepartmentReportController@departmentEmployees')->name('departments.employees');
 
     Route::get('/check', '\App\Http\Controllers\CheckController@index')->name('check');
     Route::get('/sheet-report', '\App\Http\Controllers\CheckController@sheetReport')->name('sheet-report');

@@ -103,7 +103,7 @@
         padding: 0.55rem 1rem;
         font-weight: 600;
         border: none;
-        color: #4c2d17;
+        color: white;
         background: #fff3ea;
         box-shadow: 0 10px 24px rgba(35, 18, 6, 0.16);
     }
@@ -191,6 +191,7 @@
     .profile-modal .btn-primary {
         background: #8b4513;
         border-color: #8b4513;
+        color: white;
     }
 
     .profile-modal .btn-primary:hover,

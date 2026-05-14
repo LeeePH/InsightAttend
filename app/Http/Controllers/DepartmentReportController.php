@@ -89,4 +89,45 @@ class DepartmentReportController extends Controller
             'summary' => $summary,
         ]);
     }
+
+    public function departmentEmployees(Request $request, Department $department)
+    {
+        $date = $request->query('date')
+            ? Carbon::parse($request->query('date'))
+            : today();
+
+        $employees = Employee::query()
+            ->where('department_id', $department->id)
+            ->orderBy('name')
+            ->get();
+
+        $employeeRows = $employees->map(function (Employee $emp) use ($date) {
+            $status = AttendanceStatusService::computeForDate($emp, $date->copy());
+            return [
+                'id'            => $emp->id,
+                'name'          => $emp->name,
+                'position'      => $emp->position,
+                'status'        => $status['status_label'],
+                'actual_in'     => $status['actual_in'],
+                'actual_out'    => $status['actual_out'],
+                'worked_seconds'=> $status['worked_seconds'],
+                'expected_start'=> $status['expected_start'],
+                'expected_end'  => $status['expected_end'],
+            ];
+        });
+
+        $summary = [
+            'present' => $employeeRows->where('status', 'Present')->count(),
+            'late'    => $employeeRows->where('status', 'Late')->count(),
+            'absent'  => $employeeRows->where('status', 'Absent')->count(),
+            'off'     => $employeeRows->where('status', 'Off')->count(),
+        ];
+
+        return view('admin.departments.employees', [
+            'department'    => $department,
+            'date'          => $date,
+            'employeeRows'  => $employeeRows,
+            'summary'       => $summary,
+        ]);
+    }
 }

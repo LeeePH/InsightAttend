@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Attendance;
 use App\Models\DiscountApplication;
 use App\Models\Employee;
+use App\Models\EmployeeTimetableEntry;
 use App\Models\Leave;
 use App\Models\LoanRequest;
 use App\Models\OvertimeAuthorizationRequest;
@@ -78,6 +79,35 @@ class HomeController extends Controller
         $recentAttendanceActivity = $this->buildRecentAttendanceActivity($employee, $today);
         $recentRequests = $this->buildRecentRequests($employee);
 
+        // Schedule rows (same logic as EmployeeTimetableController@mySchedule)
+        $todayDow = (int) now()->format('N');
+        $scheduleEntries = EmployeeTimetableEntry::with(['course', 'classSection'])
+            ->where('employee_id', $employee->id)
+            ->orderBy('day_of_week')
+            ->orderBy('time_start')
+            ->get();
+
+        $scheduleRows = $scheduleEntries->map(function (EmployeeTimetableEntry $entry) {
+            $times = collect($entry->resolvedTimeBlocks())
+                ->map(fn ($b) => [
+                    'display' => \Carbon\Carbon::parse($b['time_start'])->format('g:i A').' - '.\Carbon\Carbon::parse($b['time_end'])->format('g:i A'),
+                ])
+                ->values();
+
+            return [
+                'day_of_week'   => (int) $entry->day_of_week,
+                'room'          => $entry->room,
+                'course_code'   => $entry->course?->code,
+                'course_name'   => $entry->course?->name,
+                'section_label' => $entry->classSection?->section_label,
+                'times'         => $times,
+            ];
+        })->sortBy('day_of_week')->values();
+
+        $dayShort = function (int $d): string {
+            return [1 => 'Mon', 2 => 'Tue', 3 => 'Wed', 4 => 'Thu', 5 => 'Fri', 6 => 'Sat', 7 => 'Sun'][$d] ?? (string) $d;
+        };
+
         return view('employee.dashboard', compact(
             'employee',
             'sched',
@@ -92,7 +122,10 @@ class HomeController extends Controller
             'lateCount',
             'absenceCount',
             'recentAttendanceActivity',
-            'recentRequests'
+            'recentRequests',
+            'scheduleRows',
+            'todayDow',
+            'dayShort'
         ));
     }
 

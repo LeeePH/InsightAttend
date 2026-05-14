@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Services\DatabaseBackupService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
@@ -97,8 +98,14 @@ class BackupController extends Controller
 
         try {
             $this->backupService->resetDatabase();
-            flash()->success('Success', 'Database reset completed. Default admin access was restored.');
-            return back();
+
+            // Re-authenticate as the freshly-seeded admin so the session stays valid
+            $newAdmin = \App\Models\User::where('email', 'admin@gmail.com')->first();
+            if ($newAdmin) {
+                \Illuminate\Support\Facades\Auth::login($newAdmin);
+            }
+
+            return redirect()->route('admin.backups')->with('danger_zone_success', 'reset');
         } catch (Throwable $e) {
             flash()->error('Error', 'Database reset failed: ' . $e->getMessage());
             return back();
@@ -114,8 +121,8 @@ class BackupController extends Controller
 
         try {
             $this->backupService->deleteDatabase();
-            flash()->success('Success', 'Database tables were deleted.');
-            return back();
+            \Illuminate\Support\Facades\Auth::logout();
+            return redirect()->route('admin.backups')->with('danger_zone_success', 'delete');
         } catch (Throwable $e) {
             flash()->error('Error', 'Database delete failed: ' . $e->getMessage());
             return back();

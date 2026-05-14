@@ -64,15 +64,24 @@ class SchedulingDepartmentService
             return strtoupper($employee->schedule_department_key);
         }
 
-        $fromDept = self::inferKeyFromText($employee->department);
+        // $employee->department can be either a plain string column value
+        // or a Department model instance (when the relation is loaded).
+        // Handle both cases safely.
+        $deptRaw = $employee->getRawOriginal('department') ?? $employee->getAttributes()['department'] ?? null;
+        $fromDept = self::inferKeyFromText(is_string($deptRaw) ? $deptRaw : null);
         if ($fromDept) {
             return $fromDept;
         }
 
-        if ($employee->relationLoaded('department') && $employee->department) {
-            return self::inferKeyFromText($employee->department->name);
+        // Try the related Department model's name
+        $relation = $employee->relationLoaded('department') ? $employee->getRelation('department') : null;
+        if ($relation instanceof \App\Models\Department && $relation->name) {
+            $fromRelation = self::inferKeyFromText($relation->name);
+            if ($fromRelation) {
+                return $fromRelation;
+            }
         }
 
-        return self::inferKeyFromText($employee->position);
+        return self::inferKeyFromText(is_string($employee->position) ? $employee->position : null);
     }
 }

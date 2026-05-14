@@ -62,6 +62,13 @@
                     <span class="badge badge-warning">Late: {{ $summary['late'] ?? 0 }}</span>
                     <span class="badge badge-danger">Absent: {{ $summary['absent'] ?? 0 }}</span>
                     <span class="badge badge-secondary">Off: {{ $summary['off'] ?? 0 }}</span>
+                    @if($selectedDepartment)
+                        <a href="{{ route('departments.employees', $selectedDepartment) }}"
+                           class="btn btn-sm btn-primary ml-2"
+                           style="border-radius:999px;background:#8B4513;border-color:#8B4513;">
+                            <i class="fa fa-users mr-1"></i> View Employee Attendance
+                        </a>
+                    @endif
                 </div>
 
                 <div class="table-responsive">

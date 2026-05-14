@@ -11,6 +11,8 @@ class AuditTrailMiddleware
     private static $auditTableExists = null;
     private const EXCLUDED_ROUTES = [
         'admin.audit_logs',
+        'admin.backups.reset_database',
+        'admin.backups.delete_database',
         'notifications.read',
         'notifications.read_all',
     ];
@@ -86,6 +88,10 @@ class AuditTrailMiddleware
         $path = $request->path();
 
         if (strpos($path, 'admin/audit-logs') === 0) {
+            return false;
+        }
+
+        if (strpos($path, 'admin/backups/reset') === 0 || strpos($path, 'admin/backups/delete') === 0) {
             return false;
         }
 

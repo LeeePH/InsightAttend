@@ -164,16 +164,6 @@
                                 </a>
                             </li>
                             <li class="">
-                                <a href="{{ route('employee.my_schedule') }}" class="waves-effect {{ request()->is("employee/my-schedule") ? "mm active" : "" }}">
-                                    <i class="ti-layout-grid3-alt"></i> <span> My schedule </span>
-                                </a>
-                            </li>
-                            <li class="">
-                                <a href="{{ route('employee.settings') }}" class="waves-effect {{ request()->is("employee/settings") ? "mm active" : "" }}">
-                                    <i class="fa fa-cog"></i> <span> Settings </span>
-                                </a>
-                            </li>
-                            <li class="">
                                 <a href="{{ route('employee.attendance_logs') }}" class="waves-effect {{ request()->is("employee/attendance-logs") ? "mm active" : "" }}">
                                     <i class="ti-calendar"></i> <span> Attendance Logs </span>
                                 </a>
@@ -224,6 +214,11 @@
                                         </a>
                                     </li>
                                 </ul>
+                            </li>
+                            <li class="">
+                                <a href="{{ route('employee.settings') }}" class="waves-effect {{ request()->is("employee/settings") ? "mm active" : "" }}">
+                                    <i class="fa fa-cog"></i> <span> Account Settings </span>
+                                </a>
                             </li>
                                 @endif
                             @endauth

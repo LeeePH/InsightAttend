@@ -33,6 +33,42 @@
 @section('content')
     @include('includes.flash')
 
+    {{-- Danger zone success modal --}}
+    @if(session('danger_zone_success'))
+    <div class="modal fade" id="dangerZoneSuccessModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content text-center" style="border-radius:16px;overflow:hidden;">
+                <div class="modal-body py-5 px-4">
+                    <div style="font-size:3.5rem;line-height:1;margin-bottom:1rem;">
+                        @if(session('danger_zone_success') === 'reset')
+                            ✅
+                        @else
+                            🗑️
+                        @endif
+                    </div>
+                    <h4 class="font-weight-bold mb-2">
+                        @if(session('danger_zone_success') === 'reset')
+                            Database Reset Successful
+                        @else
+                            Database Deleted
+                        @endif
+                    </h4>
+                    <p class="text-muted mb-4">
+                        @if(session('danger_zone_success') === 'reset')
+                            All records have been cleared and the default admin account has been restored. You are now logged in as the default admin.
+                        @else
+                            All database tables have been removed. The system will not function until the database is restored or recreated.
+                        @endif
+                    </p>
+                    <button type="button" class="btn btn-primary px-4" data-dismiss="modal" style="border-radius:999px;">
+                        Got it
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
     <div class="row">
         <div class="col-lg-8">
             <div class="card">
@@ -195,3 +231,14 @@
         </div>
     </div>
 @endsection
+
+@if(session('danger_zone_success'))
+@section('script-bottom')
+<script>
+    $(document).ready(function () {
+        $('#dangerZoneSuccessModal').modal({ backdrop: 'static', keyboard: false });
+        $('#dangerZoneSuccessModal').modal('show');
+    });
+</script>
+@endsection
+@endif
