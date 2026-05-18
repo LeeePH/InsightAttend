@@ -123,6 +123,107 @@ class TimeInController extends Controller
     }
 
     /**
+     * Authenticated employee Time In from dashboard
+     */
+    public function employeeTimeIn(Request $request)
+    {
+        $employee = $request->user()?->employee;
+
+        if (!$employee) {
+            return redirect()->route('employee.dashboard')->with('error', 'No employee profile linked to your account.');
+        }
+
+        // Already timed in today?
+        $existing = Attendance::where('emp_id', $employee->id)
+            ->where('attendance_date', date('Y-m-d'))
+            ->where('type', 0)
+            ->first();
+
+        if ($existing) {
+            return redirect()->route('employee.dashboard')->with('error', 'You have already timed in today.');
+        }
+
+        $attendance = new Attendance();
+        $attendance->emp_id = $employee->id;
+        $attendance->attendance_time = date('H:i:s');
+        $attendance->attendance_date = date('Y-m-d');
+
+        $today   = Carbon::parse(date('Y-m-d'));
+        $resolved = ShiftResolver::resolve($employee, $today);
+
+        if (($resolved['is_off'] ?? false) === true) {
+            $attendance->status = 1;
+        } elseif (!empty($resolved['start'])) {
+            $start    = $resolved['start']->copy();
+            $grace    = (int) ($resolved['grace_minutes'] ?? 0);
+            $deadline = $start->addMinutes(max(0, $grace));
+            $now      = Carbon::parse($attendance->attendance_date . ' ' . $attendance->attendance_time);
+            $isLate   = $now->gt($deadline);
+            $attendance->status = $isLate ? 0 : 1;
+
+            if ($isLate) {
+                $user = User::where('email', $employee->email)->first();
+                $timeInPretty = Carbon::parse($attendance->attendance_time)->format('g:i A');
+                $msg = 'Grace period: ' . $grace . ' minute(s).';
+                if ($user) {
+                    $user->notify(new LateWarningNotification($attendance->attendance_date, $timeInPretty, $msg));
+                } else {
+                    $employee->notify(new LateWarningNotification($attendance->attendance_date, $timeInPretty, $msg));
+                }
+            }
+        } else {
+            $attendance->status = 1;
+        }
+
+        $attendance->type = 0;
+        $attendance->save();
+
+        return redirect()->route('employee.dashboard')->with('success', 'Time In recorded at ' . Carbon::parse($attendance->attendance_time)->format('g:i A') . '.');
+    }
+
+    /**
+     * Authenticated employee Time Out from dashboard
+     */
+    public function employeeTimeOut(Request $request)
+    {
+        $employee = $request->user()?->employee;
+
+        if (!$employee) {
+            return redirect()->route('employee.dashboard')->with('error', 'No employee profile linked to your account.');
+        }
+
+        // Must have timed in first
+        $timeInRecord = Attendance::where('emp_id', $employee->id)
+            ->where('attendance_date', date('Y-m-d'))
+            ->where('type', 0)
+            ->first();
+
+        if (!$timeInRecord) {
+            return redirect()->route('employee.dashboard')->with('error', 'You must time in first before timing out.');
+        }
+
+        // Already timed out?
+        $existing = Attendance::where('emp_id', $employee->id)
+            ->where('attendance_date', date('Y-m-d'))
+            ->where('type', 1)
+            ->first();
+
+        if ($existing) {
+            return redirect()->route('employee.dashboard')->with('error', 'You have already timed out today.');
+        }
+
+        $attendance = new Attendance();
+        $attendance->emp_id = $employee->id;
+        $attendance->attendance_time = date('H:i:s');
+        $attendance->attendance_date = date('Y-m-d');
+        $attendance->status = 1;
+        $attendance->type = 1;
+        $attendance->save();
+
+        return redirect()->route('employee.dashboard')->with('success', 'Time Out recorded at ' . Carbon::parse($attendance->attendance_time)->format('g:i A') . '.');
+    }
+
+    /**
      * Show the Time Out page
      */
     public function timeoutIndex()

@@ -21,10 +21,24 @@
     </div>
     <div class="form-group col-md-6">
         <label>Course</label>
-        <select name="course_id" class="form-control" required>
+        <select name="course_id" class="form-control js-timetable-course" required>
             <option value="">- Select Course -</option>
             @foreach($courses as $course)
-                <option value="{{ $course->id }}" {{ (int) old('course_id', $entry->course_id ?? 0) === (int) $course->id ? 'selected' : '' }}>
+                @php
+                    // Derive a dept tag from the course code prefix
+                    $prefix = strtoupper(preg_replace('/[\s\d].*/', '', trim($course->code)));
+                    $courseDept = match(true) {
+                        $prefix === 'IT'   => 'IT',
+                        $prefix === 'EDUC' => 'EDUC',
+                        $prefix === 'SHTM' => 'SHTM',
+                        default            => 'GE', // GE, PE, NSTP, etc.
+                    };
+                @endphp
+                <option
+                    value="{{ $course->id }}"
+                    data-dept="{{ $courseDept }}"
+                    {{ (int) old('course_id', $entry->course_id ?? 0) === (int) $course->id ? 'selected' : '' }}
+                >
                     {{ $course->code }} - {{ $course->name }}
                 </option>
             @endforeach
@@ -55,17 +69,11 @@
     </div>
 </div>
 
+{{-- department_key is derived automatically from the selected section --}}
+<input type="hidden" name="department_key" class="js-timetable-department-key" value="{{ old('department_key', $entry->department_key ?? '') }}">
+
 <div class="form-row">
-    <div class="form-group col-md-4">
-        <label>Scheduling Department</label>
-        <select name="department_key" class="form-control js-timetable-department-key" required>
-            @foreach(\App\Services\SchedulingDepartmentService::KEYS as $k)
-                <option value="{{ $k }}" {{ old('department_key', $entry->department_key ?? '') === $k ? 'selected' : '' }}>{{ $k }}</option>
-            @endforeach
-        </select>
-        <small class="text-muted">Must match the employee's profile scheduling department.</small>
-    </div>
-    <div class="form-group col-md-4">
+    <div class="form-group col-md-6">
         <label>Day</label>
         <select name="day_of_week" class="form-control" required>
             @foreach([1=>'Monday',2=>'Tuesday',3=>'Wednesday',4=>'Thursday',5=>'Friday',6=>'Saturday',7=>'Sunday'] as $num => $label)
@@ -73,7 +81,7 @@
             @endforeach
         </select>
     </div>
-    <div class="form-group col-md-4">
+    <div class="form-group col-md-6">
         <label>Room</label>
         <input type="text" name="room" class="form-control" value="{{ old('room', $entry->room ?? '') }}" placeholder="e.g. Lab-1, PB208" required maxlength="64">
     </div>

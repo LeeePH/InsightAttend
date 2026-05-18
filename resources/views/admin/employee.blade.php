@@ -158,25 +158,13 @@
                             <div class="col-12">
                                 <div class="card">
                                     <div class="card-body">
-                                                @php
-                                                    $deptOptions = [];
-                                                    foreach ($employees as $emp) {
-                                                        $deptName = $emp->department?->name ?? null;
-                                                        if ($deptName) {
-                                                            $deptOptions[$deptName] = true;
-                                                        }
-                                                    }
-                                                    $deptOptions = array_keys($deptOptions);
-                                                    sort($deptOptions, SORT_NATURAL | SORT_FLAG_CASE);
-                                                @endphp
-
                                                 <div class="row mb-3">
                                                     <div class="col-md-4">
                                                         <label for="employeeDepartmentFilter" class="mb-1">Filter by Department</label>
                                                         <select id="employeeDepartmentFilter" class="form-control">
                                                             <option value="" selected>All Departments</option>
-                                                            @foreach ($deptOptions as $deptOpt)
-                                                                <option value="{{ $deptOpt }}">{{ $deptOpt }}</option>
+                                                            @foreach (($departments ?? []) as $dept)
+                                                                <option value="{{ $dept->name }}">{{ $dept->name }}</option>
                                                             @endforeach
                                                         </select>
                                                     </div>
@@ -200,13 +188,16 @@
                                                     </thead>
                                                     <tbody>
                                                         @foreach( $employees as $employee)
-
-                                                        <tr>
+                                                        @php
+                                                            $empDeptName = $employee->department_id
+                                                                ? optional(\App\Models\Department::find($employee->department_id))->name
+                                                                : (is_string($employee->getRawOriginal('department')) ? $employee->getRawOriginal('department') : 'N/A');
+                                                            $empDeptName = $empDeptName ?: 'N/A';
+                                                        @endphp
+                                                        <tr data-dept="{{ $empDeptName }}">
                                                             <td>{{$employee->name}}</td>
                                                             <td>{{$employee->position}}</td>
-                                                            <td>
-                                                                {{ $employee->department?->name ?? 'N/A' }}
-                                                            </td>
+                                                            <td>{{ $empDeptName }}</td>
                                                             <td>{{ $employee->email ?: '—' }}</td>
                                                             <td>
                                                                 @php $loginUser = $employee->user; @endphp
@@ -263,16 +254,11 @@
             return (str || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         }
 
-        function getDeptCellText(rowEl) {
-            if (!rowEl || !rowEl.cells || rowEl.cells.length < 3) return '';
-            return (rowEl.cells[2].textContent || '').trim();
-        }
-
         function applyDepartmentFilter(value) {
             var tableEl = document.getElementById('datatable-buttons');
             if (!tableEl) return;
 
-            // Prefer DataTables column search if available
+            // Use DataTables column search if available (handles pagination)
             if (window.jQuery && jQuery.fn && jQuery.fn.dataTable && jQuery.fn.dataTable.isDataTable) {
                 try {
                     if (jQuery.fn.dataTable.isDataTable('#datatable-buttons')) {
@@ -285,16 +271,16 @@
                         return;
                     }
                 } catch (e) {
-                    // fall through to non-DataTables filtering
+                    // fall through
                 }
             }
 
-            // Fallback: simple row show/hide
+            // Fallback: use data-dept attribute for reliable matching
             var tbody = tableEl.tBodies && tableEl.tBodies[0];
             if (!tbody) return;
             Array.prototype.forEach.call(tbody.rows, function (tr) {
-                var deptText = getDeptCellText(tr);
-                tr.style.display = (!value || deptText === value) ? '' : 'none';
+                var dept = (tr.getAttribute('data-dept') || '').trim();
+                tr.style.display = (!value || dept === value) ? '' : 'none';
             });
         }
 

@@ -48,9 +48,9 @@
                                         </div>
                                         <div class="pt-2">
                                             <div class="float-right">
-                                                <a href="#" class="text-white-50"><i class="mdi mdi-arrow-right h5"></i></a>
+                                                <a href="{{ route('employees.index') }}" class="text-white-50"><i class="mdi mdi-arrow-right h5"></i></a>
                                             </div>
-                                            <p class="text-white-50 mb-0">More info</p>
+                                            <p class="text-white-50 mb-0"><a href="{{ route('employees.index') }}" class="text-white-50">More info</a></p>
                                         </div>
                                     </div>
                                 </div>

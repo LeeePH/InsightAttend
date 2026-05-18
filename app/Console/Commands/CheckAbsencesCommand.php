@@ -56,6 +56,15 @@ class CheckAbsencesCommand extends Command
         $skipped = 0;
 
         foreach ($employees as $employee) {
+            // Skip: date is before the employee was hired/created
+            $hireDate = $employee->date_hired
+                ? Carbon::parse($employee->date_hired)->startOfDay()
+                : Carbon::parse($employee->created_at)->startOfDay();
+            if ($date->lt($hireDate)) {
+                $skipped++;
+                continue;
+            }
+
             $resolved = ShiftResolver::resolve($employee, $date->copy());
 
             // Skip: no schedule or off day

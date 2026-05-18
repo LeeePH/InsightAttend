@@ -14,6 +14,7 @@ class DepartmentController extends Controller
         'Finance Department',
         'Registrar Department',
         'HR department',
+        'IT Department',
     ];
     /**
      * Display a listing of the resource.
@@ -97,6 +98,11 @@ class DepartmentController extends Controller
     }
 
     private function syncFixedDepartments(): void
+    {
+        self::ensureFixedDepartments();
+    }
+
+    public static function ensureFixedDepartments(): void
     {
         Department::query()
             ->whereNotIn('name', self::FIXED_DEPARTMENTS)

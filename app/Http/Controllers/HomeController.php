@@ -75,6 +75,60 @@ class HomeController extends Controller
         $expectedEnd = $resolved['end'] ?? null;
         $expectedShift = $resolved['shift'] ?? null;
 
+        // Determine whether the face camera should be shown right now
+        $now = now()->setTimezone('Asia/Manila');
+        $timeInWindowOpen  = false;
+        $timeOutWindowOpen = false;
+
+        if ($expectedStart) {
+            // Normalize expectedStart to Manila timezone for comparison
+            $startManila = $expectedStart->copy()->setTimezone('Asia/Manila');
+            // Time In window: 5 min before scheduled start up to 15 min after (grace)
+            $windowOpen  = $startManila->copy()->subMinutes(5);
+            $windowClose = $startManila->copy()->addMinutes(15);
+            $timeInWindowOpen = $now->gte($windowOpen) && $now->lte($windowClose);
+        }
+
+        if ($expectedEnd) {
+            // Normalize expectedEnd to Manila timezone
+            $endManila = $expectedEnd->copy()->setTimezone('Asia/Manila');
+            // Time Out window: from scheduled end time onwards
+            $timeOutWindowOpen = $now->gte($endManila);
+        }
+
+        // Fallback: if no attendance shift is assigned, derive window from today's timetable entries
+        if (!$expectedStart && !$expectedEnd) {
+            $todayDowNow = (int) $now->format('N');
+            $todayEntries = EmployeeTimetableEntry::where('employee_id', $employee->id)
+                ->where('day_of_week', $todayDowNow)
+                ->orderBy('time_start')
+                ->get();
+
+            if ($todayEntries->isNotEmpty()) {
+                $firstBlock = $todayEntries->first()->resolvedTimeBlocks()[0] ?? null;
+                $lastEntry  = $todayEntries->last()->resolvedTimeBlocks();
+                $lastBlock  = end($lastEntry) ?: null;
+
+                if ($firstBlock) {
+                    $startManila = \Carbon\Carbon::parse(
+                        $now->toDateString() . ' ' . $firstBlock['time_start'],
+                        'Asia/Manila'
+                    );
+                    $expectedStart = $startManila;
+                    $timeInWindowOpen = $now->gte($startManila->copy()->subMinutes(5))
+                        && $now->lte($startManila->copy()->addMinutes(15));
+                }
+                if ($lastBlock) {
+                    $endManila = \Carbon\Carbon::parse(
+                        $now->toDateString() . ' ' . $lastBlock['time_end'],
+                        'Asia/Manila'
+                    );
+                    $expectedEnd = $endManila;
+                    $timeOutWindowOpen = $now->gte($endManila);
+                }
+            }
+        }
+
         [$presentDays, $lateCount, $absenceCount] = $this->buildMonthlyAttendanceSummary($employee, $today);
         $recentAttendanceActivity = $this->buildRecentAttendanceActivity($employee, $today);
         $recentRequests = $this->buildRecentRequests($employee);
@@ -125,7 +179,9 @@ class HomeController extends Controller
             'recentRequests',
             'scheduleRows',
             'todayDow',
-            'dayShort'
+            'dayShort',
+            'timeInWindowOpen',
+            'timeOutWindowOpen'
         ));
     }
 
@@ -189,8 +245,9 @@ class HomeController extends Controller
             'phone' => ['nullable', 'string', 'max:30'],
             'date_hired' => ['nullable', 'date'],
             'employment_type' => ['nullable', 'in:full_time,part_time'],
-            'skills' => ['nullable', 'string', 'max:5000'],
-            'achievements' => ['nullable', 'string', 'max:5000'],
+            'employee_number' => ['nullable', 'string', 'max:20', 'regex:/^\d{2}-\d{4}$/'],
+            'educational_background' => ['nullable', 'string', 'max:5000'],
+            'work_experience' => ['nullable', 'string', 'max:5000'],
             'emergency_contact_name' => ['nullable', 'string', 'max:255'],
             'emergency_contact_relationship' => ['nullable', 'string', 'max:255'],
             'emergency_contact_phone' => ['nullable', 'string', 'max:30'],
@@ -204,8 +261,9 @@ class HomeController extends Controller
             $employee->phone = $validated['phone'] ?? null;
             $employee->date_hired = $validated['date_hired'] ?? null;
             $employee->employment_type = $validated['employment_type'] ?? null;
-            $employee->skills = $validated['skills'] ?? null;
-            $employee->achievements = $validated['achievements'] ?? null;
+            $employee->employee_number = $validated['employee_number'] ?? null;
+            $employee->educational_background = $validated['educational_background'] ?? null;
+            $employee->work_experience = $validated['work_experience'] ?? null;
             $employee->emergency_contact_name = $validated['emergency_contact_name'] ?? null;
             $employee->emergency_contact_relationship = $validated['emergency_contact_relationship'] ?? null;
             $employee->emergency_contact_phone = $validated['emergency_contact_phone'] ?? null;
@@ -372,10 +430,21 @@ class HomeController extends Controller
         $lateCount = 0;
         $absenceCount = 0;
 
+        // Never count days before the employee existed
+        $hireDate = $employee->date_hired
+            ? Carbon::parse($employee->date_hired)->startOfDay()
+            : Carbon::parse($employee->created_at)->startOfDay();
+
         $cursor = $today->copy()->startOfMonth();
+
+        // Start from whichever is later: start of month or hire date
+        if ($hireDate->gt($cursor)) {
+            $cursor = $hireDate->copy();
+        }
+
         while ($cursor->lte($today)) {
             $resolved = ShiftResolver::resolve($employee, $cursor->copy()->startOfDay());
-            if (($resolved['is_off'] ?? false) === true) {
+            if (!$resolved['schedule'] || ($resolved['is_off'] ?? false) === true) {
                 $cursor->addDay();
                 continue;
             }
@@ -402,20 +471,36 @@ class HomeController extends Controller
         $cursor = $today->copy();
         $checkedDays = 0;
 
+        // Never show activity before the employee existed
+        $hireDate = $employee->date_hired
+            ? Carbon::parse($employee->date_hired)->startOfDay()
+            : Carbon::parse($employee->created_at)->startOfDay();
+
         while ($items->count() < 7 && $checkedDays < 21) {
-            $resolved = ShiftResolver::resolve($employee, $cursor->copy()->startOfDay());
-            if (($resolved['is_off'] ?? false) !== true) {
-                $status = AttendanceStatusService::computeForDate($employee, $cursor->copy());
-                $items->push([
-                    'date' => $cursor->copy(),
-                    'status' => $status['status_label'],
-                    'actual_in' => $status['actual_in'],
-                    'actual_out' => $status['actual_out'],
-                    'expected_start' => $status['expected_start'],
-                    'expected_end' => $status['expected_end'],
-                    'worked_seconds' => $status['worked_seconds'],
-                ]);
+            // Stop going back before hire date
+            if ($cursor->lt($hireDate)) {
+                break;
             }
+
+            $resolved = ShiftResolver::resolve($employee, $cursor->copy()->startOfDay());
+
+            // Skip days with no schedule or off days — don't count as absent
+            if (!$resolved['schedule'] || ($resolved['is_off'] ?? false) === true) {
+                $cursor->subDay();
+                $checkedDays++;
+                continue;
+            }
+
+            $status = AttendanceStatusService::computeForDate($employee, $cursor->copy());
+            $items->push([
+                'date'           => $cursor->copy(),
+                'status'         => $status['status_label'],
+                'actual_in'      => $status['actual_in'],
+                'actual_out'     => $status['actual_out'],
+                'expected_start' => $status['expected_start'],
+                'expected_end'   => $status['expected_end'],
+                'worked_seconds' => $status['worked_seconds'],
+            ]);
 
             $cursor->subDay();
             $checkedDays++;

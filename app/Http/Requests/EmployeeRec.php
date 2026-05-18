@@ -37,15 +37,13 @@ class EmployeeRec extends FormRequest
                 }),
             ],
             'date_hired' => ['nullable', 'date'],
-            'employment_type' => ['nullable', 'in:full_time,part_time'],
+            'employment_type' => ['nullable', 'in:regular,probationary,consultant,trainee'],
             'skills' => ['nullable', 'string', 'max:5000'],
             'achievements' => ['nullable', 'string', 'max:5000'],
             'emergency_contact_name' => ['nullable', 'string', 'max:255'],
             'emergency_contact_relationship' => ['nullable', 'string', 'max:255'],
             'emergency_contact_phone' => ['nullable', 'string', 'max:30'],
-            'schedule' => $this->routeIs('employees.store')
-                ? ['nullable', 'exists:schedules,slug']
-                : ['required', 'exists:schedules,slug'],
+            'schedule' => ['nullable', 'exists:schedules,slug'],
             'portal_role' => ['required', 'in:employee,secretary'],
             'schedule_department_key' => [
                 'nullable',

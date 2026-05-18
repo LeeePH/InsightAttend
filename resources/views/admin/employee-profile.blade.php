@@ -1,8 +1,8 @@
 @extends('layouts.master')
 
 @php
-    $skills = collect(preg_split('/\r\n|\r|\n/', (string) ($employee->skills ?? '')))->map(fn ($item) => trim($item))->filter();
-    $achievements = collect(preg_split('/\r\n|\r|\n/', (string) ($employee->achievements ?? '')))->map(fn ($item) => trim($item))->filter();
+    $skills = collect(preg_split('/\r\n|\r|\n/', (string) ($employee->educational_background ?? '')))->map(fn ($item) => trim($item))->filter();
+    $achievements = collect(preg_split('/\r\n|\r|\n/', (string) ($employee->work_experience ?? '')))->map(fn ($item) => trim($item))->filter();
     $employmentType = $employee->employment_type === 'part_time' ? 'Part-time' : ($employee->employment_type === 'full_time' ? 'Full-time' : 'Not set');
 @endphp
 
@@ -163,7 +163,7 @@
 
         <div class="col-lg-6 mb-4">
             <div class="employee-profile-detail">
-                <span class="employee-profile-label">Skills & Expertise</span>
+                <span class="employee-profile-label">Educational Background</span>
                 @if ($skills->count())
                     <ul class="employee-profile-list">
                         @foreach ($skills as $skill)
@@ -171,14 +171,14 @@
                         @endforeach
                     </ul>
                 @else
-                    <div class="employee-profile-value">No skills added yet.</div>
+                    <div class="employee-profile-value">No educational background added yet.</div>
                 @endif
             </div>
         </div>
 
         <div class="col-lg-6 mb-4">
             <div class="employee-profile-detail">
-                <span class="employee-profile-label">Achievements</span>
+                <span class="employee-profile-label">Work Experience</span>
                 @if ($achievements->count())
                     <ul class="employee-profile-list">
                         @foreach ($achievements as $achievement)
@@ -186,7 +186,7 @@
                         @endforeach
                     </ul>
                 @else
-                    <div class="employee-profile-value">No achievements added yet.</div>
+                    <div class="employee-profile-value">No work experience added yet.</div>
                 @endif
             </div>
         </div>

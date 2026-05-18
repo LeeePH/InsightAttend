@@ -1,5 +1,9 @@
 @php
-    $currentDeptId = $employee->department_id ?? optional($employee->department)->id;
+    $currentDeptId = $employee->department_id ?? null;
+    // Resolve department name safely — the 'department' attribute is a legacy string column,
+    // so we must use the relationship explicitly to get the model.
+    $currentDeptModel = $employee->department_id ? \App\Models\Department::find($employee->department_id) : null;
+    $currentDeptName  = $currentDeptModel?->name ?? (is_string($employee->getRawOriginal('department')) ? $employee->getRawOriginal('department') : null);
     $currentSchedule = $employee->schedules->first();
     $currentScheduleSlug = optional($currentSchedule)->slug;
     $rotation = $employee->shiftRotation;
@@ -51,7 +55,7 @@
                     <div class="col-md-6 mb-3">
                         <div class="info-card">
                             <span class="info-label">Department</span>
-                            <div class="info-value">{{ $employee->department?->name ?? 'Not assigned' }}</div>
+                            <div class="info-value">{{ $currentDeptName ?? 'Not assigned' }}</div>
                         </div>
                     </div>
                     <div class="col-md-6 mb-3">
@@ -158,7 +162,7 @@
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <div class="modal-body text-left px-4 py-3">
+                <div class="modal-body text-left px-4 py-3" style="overflow-y: auto; max-height: 65vh;">
                     <div class="edit-section-title">Work</div>
                     <div class="row">
                         <div class="col-md-6">
@@ -170,7 +174,23 @@
                         <div class="col-md-6">
                             <div class="form-group mb-3">
                                 <label for="edit-position-{{ $employee->id }}" class="font-weight-bold">Position</label>
-                                <input type="text" class="form-control" id="edit-position-{{ $employee->id }}" name="position" value="{{ $employee->position }}" required maxlength="64">
+                                @php
+                                    $isAdminDept = ($currentDeptName === 'Admin Department');
+                                @endphp
+                                {{-- Datalist suggestions for Admin Department --}}
+                                <datalist id="edit-position-suggestions-{{ $employee->id }}">
+                                    <option value="Secretary - IT">
+                                    <option value="Secretary - Educ">
+                                    <option value="Secretary - SHTM">
+                                </datalist>
+                                {{-- Single input: always typeable, datalist attached when Admin dept --}}
+                                <input type="text" class="form-control"
+                                    id="edit-position-{{ $employee->id }}"
+                                    name="position"
+                                    value="{{ $employee->position }}"
+                                    required
+                                    maxlength="64"
+                                    {{ $isAdminDept ? 'list=edit-position-suggestions-'.$employee->id : '' }}>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -179,7 +199,7 @@
                                 <select class="form-control" id="edit-department-{{ $employee->id }}" name="department_id" required>
                                     <option value="" {{ !$currentDeptId ? 'selected' : '' }}>Select department</option>
                                     @foreach(($departments ?? []) as $dept)
-                                        <option value="{{ $dept->id }}" {{ (int) $currentDeptId === (int) $dept->id ? 'selected' : '' }}>{{ $dept->name }}</option>
+                                        <option value="{{ $dept->id }}" data-name="{{ $dept->name }}" {{ (int) $currentDeptId === (int) $dept->id ? 'selected' : '' }}>{{ $dept->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -216,26 +236,25 @@
 
                     <div class="edit-section-title">Portal access</div>
                     <div class="rounded border bg-light p-3 mb-3">
+                        {{-- portal_role submitted as hidden so secretary logic still works --}}
+                        @if ($portalRoleLocked)
+                            <input type="hidden" name="portal_role" value="employee">
+                        @else
+                            <input type="hidden" id="edit-portal-role-{{ $employee->id }}" name="portal_role" value="{{ $portalRoleValue }}">
+                        @endif
                         <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group mb-md-0">
-                                    <label for="edit-portal-role-{{ $employee->id }}" class="font-weight-bold">Role</label>
-                                    @if ($portalRoleLocked)
-                                        <p class="small text-muted mb-2">This login has an admin or HR role. Change it from User Management.</p>
-                                        <input type="hidden" name="portal_role" value="employee">
-                                    @else
-                                        <select class="form-control" id="edit-portal-role-{{ $employee->id }}" name="portal_role" required>
-                                            <option value="employee" {{ $portalRoleValue === 'employee' ? 'selected' : '' }}>Employee</option>
-                                            <option value="secretary" {{ $portalRoleValue === 'secretary' ? 'selected' : '' }}>Secretary</option>
-                                        </select>
-                                        <small class="text-muted d-block mt-1">Secretary requires IT, EDUC, or SHTM above.</small>
-                                    @endif
-                                </div>
-                            </div>
-                            <div class="col-md-6">
+                            <div class="col-md-12">
                                 <div class="form-group mb-0">
                                     <label for="edit-password-{{ $employee->id }}" class="font-weight-bold">New login password</label>
-                                    <input type="password" class="form-control" id="edit-password-{{ $employee->id }}" name="password" placeholder="Leave blank to keep current" autocomplete="new-password">
+                                    <div class="input-group">
+                                        <input type="password" class="form-control" id="edit-password-{{ $employee->id }}" name="password" placeholder="Leave blank to keep current" autocomplete="new-password">
+                                        <div class="input-group-append">
+                                            <button type="button" class="btn btn-outline-secondary" tabindex="-1" title="Show/hide password"
+                                                onclick="(function(btn){var inp=document.getElementById('edit-password-{{ $employee->id }}');if(!inp)return;var show=inp.type==='password';inp.type=show?'text':'password';var ic=btn.querySelector('i');if(ic)ic.className=show?'fa fa-eye-slash':'fa fa-eye';})(this)">
+                                                <i class="fa fa-eye"></i>
+                                            </button>
+                                        </div>
+                                    </div>
                                     <small class="text-muted d-block mt-1">Optional. Min. 8 characters. Set email + password to create a new login.</small>
                                 </div>
                             </div>
@@ -246,30 +265,43 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group mb-3">
+                                <label for="edit-employee-number-{{ $employee->id }}" class="font-weight-bold">Employee Number</label>
+                                <input type="text" class="form-control" id="edit-employee-number-{{ $employee->id }}" name="employee_number"
+                                       value="{{ $employee->employee_number }}"
+                                       placeholder="e.g. 24-0001"
+                                       pattern="\d{2}-\d{4}"
+                                       maxlength="20">
+                                <small class="text-muted d-block mt-1">Format: 2X-XXXX (optional)</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
                                 <label for="edit-date-hired-{{ $employee->id }}" class="font-weight-bold">Date hired</label>
                                 <input type="date" class="form-control" id="edit-date-hired-{{ $employee->id }}" name="date_hired" value="{{ optional($employee->date_hired)->toDateString() }}">
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group mb-3">
-                                <label for="edit-employment-type-{{ $employee->id }}" class="font-weight-bold">Employment type</label>
+                                <label for="edit-employment-type-{{ $employee->id }}" class="font-weight-bold">Employment Status</label>
                                 <select class="form-control" id="edit-employment-type-{{ $employee->id }}" name="employment_type">
                                     <option value="">Select</option>
-                                    <option value="full_time" {{ $employee->employment_type === 'full_time' ? 'selected' : '' }}>Full-time</option>
-                                    <option value="part_time" {{ $employee->employment_type === 'part_time' ? 'selected' : '' }}>Part-time</option>
+                                    <option value="regular" {{ $employee->employment_type === 'regular' ? 'selected' : '' }}>Regular Employee</option>
+                                    <option value="probationary" {{ $employee->employment_type === 'probationary' ? 'selected' : '' }}>Probationary</option>
+                                    <option value="consultant" {{ $employee->employment_type === 'consultant' ? 'selected' : '' }}>Consultant</option>
+                                    <option value="trainee" {{ $employee->employment_type === 'trainee' ? 'selected' : '' }}>Trainee</option>
                                 </select>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group mb-3">
-                                <label for="edit-skills-{{ $employee->id }}" class="font-weight-bold">Skills &amp; expertise</label>
-                                <textarea class="form-control" id="edit-skills-{{ $employee->id }}" name="skills" rows="2" placeholder="One per line">{{ $employee->skills }}</textarea>
+                                <label for="edit-educational-background-{{ $employee->id }}" class="font-weight-bold">Educational Background</label>
+                                <textarea class="form-control" id="edit-educational-background-{{ $employee->id }}" name="educational_background" rows="2" placeholder="One entry per line">{{ $employee->educational_background }}</textarea>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group mb-3">
-                                <label for="edit-achievements-{{ $employee->id }}" class="font-weight-bold">Achievements</label>
-                                <textarea class="form-control" id="edit-achievements-{{ $employee->id }}" name="achievements" rows="2" placeholder="One per line">{{ $employee->achievements }}</textarea>
+                                <label for="edit-work-experience-{{ $employee->id }}" class="font-weight-bold">Work Experience</label>
+                                <textarea class="form-control" id="edit-work-experience-{{ $employee->id }}" name="work_experience" rows="2" placeholder="One entry per line">{{ $employee->work_experience }}</textarea>
                             </div>
                         </div>
                     </div>
@@ -296,30 +328,6 @@
                         </div>
                     </div>
 
-                    <div class="edit-section-title">Attendance schedule</div>
-                    <div class="form-group mb-2">
-                        <label for="edit-schedule-{{ $employee->id }}" class="font-weight-bold">Schedule</label>
-                        <select class="form-control" id="edit-schedule-{{ $employee->id }}" name="schedule" required>
-                            <option value="" {{ !$currentScheduleSlug ? 'selected' : '' }}>Select schedule</option>
-                            @foreach ($schedules as $schedule)
-                                <option value="{{ $schedule->slug }}" {{ $currentScheduleSlug === $schedule->slug ? 'selected' : '' }}>
-                                    {{ $schedule->slug }}
-                                    @if (($schedule->schedule_type ?? 'fixed') === 'shifting')
-                                        (Shifting)
-                                    @else
-                                        — {{ \Carbon\Carbon::parse($schedule->time_in)->format('g:i A') }} to {{ \Carbon\Carbon::parse($schedule->time_out)->format('g:i A') }}
-                                    @endif
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="form-group mb-0" data-rotation-fields style="{{ ($currentSchedule && ($currentSchedule->schedule_type ?? 'fixed') === 'shifting') ? '' : 'display:none;' }}">
-                        <label class="font-weight-bold">Rotation start</label>
-                        <input type="date" class="form-control mb-2" name="rotation_start_date" value="{{ $rotationStartDate }}">
-                        <label class="font-weight-bold">Rotation pattern</label>
-                        <input type="text" class="form-control" name="rotation_pattern" value="{{ $rotationPatternInput }}" placeholder="DAY,NIGHT,OFF">
-                        <small class="text-muted d-block mt-1">Comma-separated codes for shifting schedules.</small>
-                    </div>
                 </div>
                 <div class="modal-footer bg-light border-0">
                     <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
@@ -331,26 +339,53 @@
 </div>
 
 <script>
-    (function () {
-        var sel = document.getElementById('edit-schedule-{{ $employee->id }}');
-        if (!sel) return;
-        var rotationFields = sel.closest('.modal-content') ? sel.closest('.modal-content').querySelectorAll('[data-rotation-fields]') : [];
-        var scheduleTypeBySlug = {};
-        @foreach ($schedules as $s)
-            scheduleTypeBySlug[@json($s->slug)] = @json($s->schedule_type ?? 'fixed');
-        @endforeach
+(function () {
+    var empId    = '{{ $employee->id }}';
+    var deptSel  = document.getElementById('edit-department-' + empId);
+    var posText  = document.getElementById('edit-position-' + empId);
+    var roleSel  = document.getElementById('edit-portal-role-' + empId);
+    var deptMgmt = document.getElementById('edit-schedule-dept-' + empId);
 
-        function refreshRotation() {
-            var slug = sel.value || '';
-            var stype = scheduleTypeBySlug[slug] || 'fixed';
-            var show = (stype === 'shifting');
-            rotationFields.forEach(function (el) {
-                el.style.display = show ? '' : 'none';
-            });
+    var secretaryDeptMap = {
+        'Secretary - IT':   'IT',
+        'Secretary - Educ': 'EDUC',
+        'Secretary - SHTM': 'SHTM'
+    };
+
+    function isAdminDept() {
+        var opt = deptSel ? deptSel.options[deptSel.selectedIndex] : null;
+        return opt && opt.getAttribute('data-name') === 'Admin Department';
+    }
+
+    function syncDatalist() {
+        if (!posText) return;
+        if (isAdminDept()) {
+            posText.setAttribute('list', 'edit-position-suggestions-' + empId);
+        } else {
+            posText.removeAttribute('list');
         }
-        sel.addEventListener('change', refreshRotation);
-        refreshRotation();
-    })();
+    }
+
+    function onPositionInput() {
+        var val = posText ? posText.value : '';
+        var deptKey = secretaryDeptMap[val] || '';
+        if (!roleSel || !deptMgmt) return;
+        if (deptKey && isAdminDept()) {
+            roleSel.value = 'secretary';
+            deptMgmt.value = deptKey;
+        }
+    }
+
+    if (deptSel) {
+        deptSel.addEventListener('change', syncDatalist);
+    }
+    if (posText) {
+        posText.addEventListener('input', onPositionInput);
+        posText.addEventListener('change', onPositionInput);
+    }
+
+    syncDatalist();
+})();
 </script>
 
 <!-- Delete -->

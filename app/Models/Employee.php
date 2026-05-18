@@ -18,9 +18,9 @@ class Employee extends Model
     }
     protected $table = 'employees';
     protected $fillable = [
-        'name', 'email', 'phone', 'pin_code', 'position', 'department', 'face_descriptor', 'face_image', 'face_registered',
+        'name', 'employee_number', 'email', 'phone', 'pin_code', 'position', 'department', 'face_descriptor', 'face_image', 'face_registered',
         'employment_status', 'departure_date', 'departure_reason', 'status_updated_by', 'date_hired',
-        'employment_type', 'skills', 'achievements',         'emergency_contact_name',
+        'employment_type', 'educational_background', 'work_experience', 'emergency_contact_name',
         'emergency_contact_relationship', 'emergency_contact_phone',
         'schedule_department_key',
     ];

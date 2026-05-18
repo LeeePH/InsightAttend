@@ -18,6 +18,8 @@ Route::get('/lock-screen', '\App\Http\Controllers\HomeController@lockScreen')->n
 Route::get('/employee/dashboard', '\App\Http\Controllers\HomeController@employeeDashboard')->name('employee.dashboard')->middleware('auth');
 Route::post('/employee/password', '\App\Http\Controllers\HomeController@updatePassword')->name('employee.password.update')->middleware('auth');
 Route::get('/employee/attendance-logs', '\App\Http\Controllers\HomeController@employeeAttendanceLogs')->name('employee.attendance_logs')->middleware('auth');
+Route::post('/employee/timein', '\App\Http\Controllers\TimeInController@employeeTimeIn')->name('employee.timein')->middleware('auth');
+Route::post('/employee/timeout', '\App\Http\Controllers\TimeInController@employeeTimeOut')->name('employee.timeout')->middleware('auth');
 Route::group(['middleware' => ['auth', 'Role'], 'roles' => ['employee']], function () {
     Route::get('/employee/my-schedule', '\App\Http\Controllers\EmployeeTimetableController@mySchedule')->name('employee.my_schedule');
     Route::get('/employee/my-schedule/preview', '\App\Http\Controllers\EmployeeTimetableController@mySchedulePreview')->name('employee.my_schedule.preview');

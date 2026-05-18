@@ -241,36 +241,40 @@
 <script>
     (function () {
         function bindDepartmentSectionFilter(container) {
-            var dept = container.querySelector('.js-timetable-department-key');
+            var deptInput = container.querySelector('.js-timetable-department-key');
             var sec = container.querySelector('.js-timetable-class-section');
-            if (!dept || !sec) return;
+            var courseSelect = container.querySelector('.js-timetable-course');
+            if (!sec || !deptInput) return;
 
-            function sync() {
-                var dk = (dept.value || '').toUpperCase();
-                var current = sec.value;
-                var opts = sec.querySelectorAll('option[data-department]');
-                var firstOk = '';
-                opts.forEach(function (opt) {
-                    var od = (opt.getAttribute('data-department') || '').toUpperCase();
-                    var show = !dk || od === dk;
+            function syncDeptAndCourses() {
+                var selected = sec.options[sec.selectedIndex];
+                var dk = selected ? (selected.getAttribute('data-department') || '').toUpperCase() : '';
+                deptInput.value = dk;
+
+                if (!courseSelect) return;
+
+                var currentCourse = courseSelect.value;
+                var firstVisible = '';
+
+                Array.prototype.forEach.call(courseSelect.options, function (opt) {
+                    if (!opt.value) return; // keep the placeholder
+                    var courseDept = (opt.getAttribute('data-dept') || '').toUpperCase();
+                    // Show: exact dept match OR general education (GE/PE/NSTP) OR no dept filter active
+                    var show = !dk || courseDept === dk || courseDept === 'GE';
+                    opt.style.display = show ? '' : 'none';
                     opt.disabled = !show;
-                    if (show && !firstOk) {
-                        firstOk = opt.value;
-                    }
+                    if (show && !firstVisible) firstVisible = opt.value;
                 });
-                if (current) {
-                    var ok = Array.prototype.some.call(sec.options, function (o) {
-                        return o.value === current && !o.disabled;
-                    });
-                    if (ok) {
-                        return;
-                    }
+
+                // If the currently selected course is now hidden, reset
+                var currentOpt = courseSelect.querySelector('option[value="' + currentCourse + '"]');
+                if (currentCourse && currentOpt && currentOpt.disabled) {
+                    courseSelect.value = '';
                 }
-                sec.value = firstOk || '';
             }
 
-            dept.addEventListener('change', sync);
-            sync();
+            sec.addEventListener('change', syncDeptAndCourses);
+            syncDeptAndCourses();
         }
 
         function bindContainer(container) {

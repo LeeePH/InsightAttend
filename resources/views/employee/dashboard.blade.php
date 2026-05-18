@@ -273,7 +273,196 @@
                         </div>
                     </div>
 
-                    <div class="mt-3 d-flex gap-2 flex-wrap" style="gap:.5rem;">
+                    {{-- ── Face Recognition Time In / Time Out ── --}}
+                    <div class="mt-3 mb-3" id="attendanceActionWrap">
+                        @if(!$timeIn)
+                            {{-- ── Not timed in yet ── --}}
+                            @if($timeInWindowOpen)
+                                {{-- Window is open: show face scanner ── --}}
+                                @if($employee->face_descriptor)
+                                    <div id="faceTimeinWrap">
+                                        <div style="font-size:.78rem;color:var(--emp-muted);margin-bottom:.4rem;text-align:center;">
+                                            <i class="fa fa-camera mr-1"></i> Face verification required to Time In
+                                        </div>
+                                        @if($expectedStart)
+                                            <div style="font-size:.75rem;color:var(--emp-muted);text-align:center;margin-bottom:.5rem;">
+                                                Schedule: {{ $expectedStart->format('g:i A') }}
+                                                @if($expectedEnd) – {{ $expectedEnd->format('g:i A') }} @endif
+                                                &nbsp;·&nbsp; Grace until {{ $expectedStart->copy()->addMinutes(15)->format('g:i A') }}
+                                            </div>
+                                        @endif
+                                        <div style="position:relative;width:100%;max-width:260px;height:195px;margin:0 auto;border-radius:10px;overflow:hidden;background:#000;border:2px solid var(--emp-border);">
+                                            <video id="dashVideo" autoplay playsinline style="width:100%;height:100%;object-fit:cover;"></video>
+                                            <canvas id="dashCanvas" style="position:absolute;top:0;left:0;width:100%;height:100%;"></canvas>
+                                        </div>
+                                        <div id="dashFaceStatus" class="text-center mt-2" style="font-size:.78rem;color:var(--emp-muted);min-height:1.2em;"></div>
+                                        <form method="POST" action="{{ route('employee.timein') }}" id="dashTimeInForm" style="display:none;">
+                                            @csrf
+                                        </form>
+                                    </div>
+                                @else
+                                    <div class="alert alert-warning py-2 px-3 mb-2" style="font-size:.8rem;border-radius:8px;">
+                                        <i class="fa fa-exclamation-triangle mr-1"></i> No face registered. Register your face in your profile to use facial attendance.
+                                    </div>
+                                    <form method="POST" action="{{ route('employee.timein') }}">
+                                        @csrf
+                                        <button type="submit" class="btn btn-success btn-block font-weight-bold"
+                                                style="border-radius:10px;padding:.6rem 1rem;font-size:.95rem;"
+                                                onclick="return confirmAction(this, 'Time In', 'Record your time in now?')">
+                                            <i class="fa fa-sign-in mr-1"></i> Time In
+                                        </button>
+                                    </form>
+                                @endif
+                            @else
+                                {{-- Window not open: info + early time-in option ── --}}
+                                <div class="text-center py-2" style="color:var(--emp-muted);font-size:.85rem;">
+                                    <i class="fa fa-clock-o mr-1"></i>
+                                    @if($expectedStart)
+                                        Time In opens at {{ $expectedStart->copy()->subMinutes(5)->format('g:i A') }}
+                                        <div style="font-size:.75rem;margin-top:.25rem;">
+                                            Schedule: {{ $expectedStart->format('g:i A') }}
+                                            @if($expectedEnd) – {{ $expectedEnd->format('g:i A') }} @endif
+                                        </div>
+                                    @else
+                                        No schedule assigned for today.
+                                    @endif
+                                </div>
+
+                                {{-- Early Time In option ── --}}
+                                <div class="text-center mt-2">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                                            style="border-radius:999px;font-size:.75rem;"
+                                            onclick="document.getElementById('earlyTimeinWrap').style.display='block';this.style.display='none';">
+                                        <i class="fa fa-sign-in mr-1"></i> Early Time In
+                                    </button>
+                                </div>
+                                <div id="earlyTimeinWrap" style="display:none;margin-top:.75rem;">
+                                    @if($employee->face_descriptor)
+                                        <div style="font-size:.75rem;color:var(--emp-muted);text-align:center;margin-bottom:.4rem;">
+                                            <i class="fa fa-camera mr-1"></i> Face verification — Early Time In
+                                        </div>
+                                        <div style="position:relative;width:100%;max-width:260px;height:195px;margin:0 auto;border-radius:10px;overflow:hidden;background:#000;border:2px solid var(--emp-border);">
+                                            <video id="dashVideo" autoplay playsinline style="width:100%;height:100%;object-fit:cover;"></video>
+                                            <canvas id="dashCanvas" style="position:absolute;top:0;left:0;width:100%;height:100%;"></canvas>
+                                        </div>
+                                        <div id="dashFaceStatus" class="text-center mt-2" style="font-size:.78rem;color:var(--emp-muted);min-height:1.2em;"></div>
+                                        <form method="POST" action="{{ route('employee.timein') }}" id="dashTimeInForm" style="display:none;">
+                                            @csrf
+                                        </form>
+                                    @else
+                                        <form method="POST" action="{{ route('employee.timein') }}">
+                                            @csrf
+                                            <button type="submit" class="btn btn-success btn-block font-weight-bold"
+                                                    style="border-radius:10px;padding:.5rem 1rem;font-size:.9rem;"
+                                                    onclick="return confirmAction(this, 'Early Time In', 'Record an early time in now?')">
+                                                <i class="fa fa-sign-in mr-1"></i> Confirm Early Time In
+                                            </button>
+                                        </form>
+                                    @endif
+                                </div>
+                            @endif
+
+                        @elseif(!$timeOut)
+                            {{-- ── Timed in, not out yet ── --}}
+                            <div class="mb-2 p-2 text-center" style="background:#e4f4ea;border-radius:10px;border:1px solid #b7dfc5;">
+                                <div style="font-size:.72rem;color:#22633d;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Timed In</div>
+                                <div style="font-size:1.1rem;font-weight:700;color:#22633d;">{{ $timeIn->format('h:i A') }}</div>
+                            </div>
+                            @if($timeOutWindowOpen)
+                                {{-- Time out window is open ── --}}
+                                @if($employee->face_descriptor)
+                                    <div id="faceTimeoutWrap">
+                                        <div style="font-size:.78rem;color:var(--emp-muted);margin-bottom:.4rem;text-align:center;">
+                                            <i class="fa fa-camera mr-1"></i> Face verification required to Time Out
+                                        </div>
+                                        @if($expectedEnd)
+                                            <div style="font-size:.75rem;color:var(--emp-muted);text-align:center;margin-bottom:.5rem;">
+                                                Scheduled end: {{ $expectedEnd->format('g:i A') }}
+                                            </div>
+                                        @endif
+                                        <div style="position:relative;width:100%;max-width:260px;height:195px;margin:0 auto;border-radius:10px;overflow:hidden;background:#000;border:2px solid var(--emp-border);">
+                                            <video id="dashVideo" autoplay playsinline style="width:100%;height:100%;object-fit:cover;"></video>
+                                            <canvas id="dashCanvas" style="position:absolute;top:0;left:0;width:100%;height:100%;"></canvas>
+                                        </div>
+                                        <div id="dashFaceStatus" class="text-center mt-2" style="font-size:.78rem;color:var(--emp-muted);min-height:1.2em;"></div>
+                                        <form method="POST" action="{{ route('employee.timeout') }}" id="dashTimeOutForm" style="display:none;">
+                                            @csrf
+                                        </form>
+                                    </div>
+                                @else
+                                    <form method="POST" action="{{ route('employee.timeout') }}">
+                                        @csrf
+                                        <button type="submit" class="btn btn-danger btn-block font-weight-bold"
+                                                style="border-radius:10px;font-size:.95rem;"
+                                                onclick="return confirmAction(this, 'Time Out', 'Record your time out now?')">
+                                            <i class="fa fa-sign-out mr-1"></i> Time Out
+                                        </button>
+                                    </form>
+                                @endif
+                            @else
+                                {{-- Time out window not open: info + early time-out option ── --}}
+                                <div class="text-center py-2" style="color:var(--emp-muted);font-size:.85rem;">
+                                    <i class="fa fa-clock-o mr-1"></i>
+                                    @if($expectedEnd)
+                                        Time Out available from {{ $expectedEnd->format('g:i A') }}
+                                    @else
+                                        Time Out will be available after your scheduled end time.
+                                    @endif
+                                </div>
+
+                                {{-- Early Time Out option ── --}}
+                                <div class="text-center mt-2">
+                                    <button type="button" class="btn btn-sm btn-outline-danger"
+                                            style="border-radius:999px;font-size:.75rem;"
+                                            onclick="document.getElementById('earlyTimeoutWrap').style.display='block';this.style.display='none';">
+                                        <i class="fa fa-sign-out mr-1"></i> Early Time Out
+                                    </button>
+                                </div>
+                                <div id="earlyTimeoutWrap" style="display:none;margin-top:.75rem;">
+                                    @if($employee->face_descriptor)
+                                        <div style="font-size:.75rem;color:#9b2f24;text-align:center;margin-bottom:.4rem;">
+                                            <i class="fa fa-camera mr-1"></i> Face verification — Early Time Out
+                                        </div>
+                                        <div style="position:relative;width:100%;max-width:260px;height:195px;margin:0 auto;border-radius:10px;overflow:hidden;background:#000;border:2px solid #f0b8b0;">
+                                            <video id="dashVideo" autoplay playsinline style="width:100%;height:100%;object-fit:cover;"></video>
+                                            <canvas id="dashCanvas" style="position:absolute;top:0;left:0;width:100%;height:100%;"></canvas>
+                                        </div>
+                                        <div id="dashFaceStatus" class="text-center mt-2" style="font-size:.78rem;color:var(--emp-muted);min-height:1.2em;"></div>
+                                        <form method="POST" action="{{ route('employee.timeout') }}" id="dashTimeOutForm" style="display:none;">
+                                            @csrf
+                                        </form>
+                                    @else
+                                        <form method="POST" action="{{ route('employee.timeout') }}">
+                                            @csrf
+                                            <button type="submit" class="btn btn-danger btn-block font-weight-bold"
+                                                    style="border-radius:10px;font-size:.9rem;"
+                                                    onclick="return confirmAction(this, 'Early Time Out', 'Record an early time out now?')">
+                                                <i class="fa fa-sign-out mr-1"></i> Confirm Early Time Out
+                                            </button>
+                                        </form>
+                                    @endif
+                                </div>
+                            @endif
+
+                        @else
+                            {{-- ── Both recorded ── --}}
+                            <div class="d-flex" style="gap:.5rem;">
+                                <div class="flex-fill p-2 text-center" style="background:#e4f4ea;border-radius:10px;border:1px solid #b7dfc5;">
+                                    <div style="font-size:.72rem;color:#22633d;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Time In</div>
+                                    <div style="font-size:1rem;font-weight:700;color:#22633d;">{{ $timeIn->format('h:i A') }}</div>
+                                </div>
+                                <div class="flex-fill p-2 text-center" style="background:#fde6e2;border-radius:10px;border:1px solid #f0b8b0;">
+                                    <div style="font-size:.72rem;color:#9b2f24;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Time Out</div>
+                                    <div style="font-size:1rem;font-weight:700;color:#9b2f24;">{{ $timeOut->format('h:i A') }}</div>
+                                </div>
+                            </div>
+                            <div class="text-center mt-2" style="font-size:.8rem;color:var(--emp-muted);">
+                                <i class="fa fa-check-circle text-success mr-1"></i> Attendance complete for today
+                            </div>
+                        @endif
+                    </div>
+
+                    <div class="d-flex flex-wrap" style="gap:.5rem;">
                         <a href="{{ route('employee.attendance_logs') }}" class="btn btn-sm btn-outline-secondary" style="border-radius:999px;">Attendance Logs</a>
                         <a href="{{ route('profile') }}" class="btn btn-sm btn-primary" style="border-radius:999px;background:#8B4513;border-color:#8B4513;">My Profile</a>
                     </div>
@@ -458,24 +647,34 @@
 @endsection
 
 @section('script-bottom')
+<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 <script>
 (function () {
+    /* ── Confirmation helper (fallback for no-face employees) ── */
+    window.confirmAction = function (btn, title, message) {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: title, text: message, icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#8B4513', cancelButtonColor: '#aaa',
+                confirmButtonText: 'Yes, ' + title, cancelButtonText: 'Cancel',
+            }).then(function (result) { if (result.isConfirmed) btn.closest('form').submit(); });
+            return false;
+        }
+        return confirm(message);
+    };
+
     /* ── Live Philippine time clock ── */
     function updatePHClock() {
         var now = new Date();
         var ph  = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Manila' }));
-
-        var h   = ph.getHours();
-        var m   = ph.getMinutes();
-        var s   = ph.getSeconds();
+        var h = ph.getHours(), m = ph.getMinutes(), s = ph.getSeconds();
         var ampm = h >= 12 ? 'PM' : 'AM';
         h = h % 12 || 12;
-        var timeStr = (h < 10 ? '0'+h : h) + ':' + (m < 10 ? '0'+m : m) + ':' + (s < 10 ? '0'+s : s) + ' ' + ampm;
-
+        var timeStr = (h<10?'0'+h:h)+':'+(m<10?'0'+m:m)+':'+(s<10?'0'+s:s)+' '+ampm;
         var days   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
         var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-        var dateStr = days[ph.getDay()] + ', ' + months[ph.getMonth()] + ' ' + ph.getDate() + ', ' + ph.getFullYear();
-
+        var dateStr = days[ph.getDay()]+', '+months[ph.getMonth()]+' '+ph.getDate()+', '+ph.getFullYear();
         var timeEl = document.getElementById('heroPHTime');
         var dateEl = document.getElementById('heroPHDate');
         if (timeEl) timeEl.textContent = timeStr;
@@ -483,38 +682,141 @@
     }
     updatePHClock();
     setInterval(updatePHClock, 1000);
+
     /* ── Donut ring helper ── */
-    function drawRing(canvasId, value, max, color) {
+    function drawRing(canvasId, value, max) {
         var canvas = document.getElementById(canvasId);
         if (!canvas) return;
         var ctx = canvas.getContext('2d');
         var cx = 32, cy = 32, r = 26, lw = 6;
         var pct = max > 0 ? Math.min(value / max, 1) : 0;
-
         ctx.clearRect(0, 0, 64, 64);
-
-        // Track
-        ctx.beginPath();
-        ctx.arc(cx, cy, r, 0, Math.PI * 2);
-        ctx.strokeStyle = 'rgba(255,255,255,.2)';
-        ctx.lineWidth = lw;
-        ctx.stroke();
-
-        // Fill
+        ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2);
+        ctx.strokeStyle = 'rgba(255,255,255,.2)'; ctx.lineWidth = lw; ctx.stroke();
         if (pct > 0) {
             ctx.beginPath();
-            ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * pct);
-            ctx.strokeStyle = 'rgba(255,255,255,.9)';
-            ctx.lineWidth = lw;
-            ctx.lineCap = 'round';
-            ctx.stroke();
+            ctx.arc(cx, cy, r, -Math.PI/2, -Math.PI/2 + Math.PI*2*pct);
+            ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = lw;
+            ctx.lineCap = 'round'; ctx.stroke();
         }
     }
-
     var workingDays = {{ now()->day }};
-    drawRing('ringPresent', {{ $presentDays }}, workingDays, '#fff');
-    drawRing('ringLate',    {{ $lateCount }},   workingDays, '#fff');
-    drawRing('ringAbsent',  {{ $absenceCount }}, workingDays, '#fff');
+    drawRing('ringPresent', {{ $presentDays }}, workingDays);
+    drawRing('ringLate',    {{ $lateCount }},   workingDays);
+    drawRing('ringAbsent',  {{ $absenceCount }}, workingDays);
 })();
 </script>
+
+@php
+    $hasFace = !empty($employee->face_descriptor);
+    $needsTimein  = !$timeIn  && ($timeInWindowOpen  || true); // always init if face present; window controls visibility
+    $needsTimeout = $timeIn && !$timeOut && ($timeOutWindowOpen || true);
+    // Show the face widget JS whenever the camera elements exist on the page
+    $showFaceWidget = $hasFace && (!$timeIn || (!$timeOut));
+@endphp
+
+@if($showFaceWidget)
+<script>
+(function () {
+    var video      = document.getElementById('dashVideo');
+    var canvas     = document.getElementById('dashCanvas');
+    var statusEl   = document.getElementById('dashFaceStatus');
+    var actionForm = document.getElementById('{{ (!$timeIn) ? 'dashTimeInForm' : 'dashTimeOutForm' }}');
+    var actionLabel = '{{ (!$timeIn) ? 'Time In' : 'Time Out' }}';
+
+    if (!video || !canvas || !actionForm) return;
+
+    // The logged-in employee's own face descriptor (already verified by auth)
+    var ownDescriptorRaw = @json($employee->face_descriptor);
+    var MATCH_THRESHOLD  = 0.45; // slightly more lenient than kiosk (same person, different lighting)
+    var SCORE_THRESHOLD  = 0.75;
+    var modelsLoaded     = false;
+    var faceMatcher      = null;
+    var isSubmitting     = false;
+    var scanInterval     = null;
+
+    function setStatus(msg, type) {
+        if (!statusEl) return;
+        var colors = { processing: '#7b5a45', success: '#22633d', error: '#9b2f24' };
+        statusEl.textContent = msg;
+        statusEl.style.color = colors[type] || '#7b5a45';
+    }
+
+    // Load face-api models then build a matcher for just this employee
+    Promise.all([
+        faceapi.nets.tinyFaceDetector.loadFromUri('https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/'),
+        faceapi.nets.faceLandmark68Net.loadFromUri('https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/'),
+        faceapi.nets.faceRecognitionNet.loadFromUri('https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/')
+    ]).then(function () {
+        modelsLoaded = true;
+        try {
+            var descriptor = new Float32Array(JSON.parse(ownDescriptorRaw));
+            var labeled = new faceapi.LabeledFaceDescriptors('self', [descriptor]);
+            faceMatcher = new faceapi.FaceMatcher([labeled], MATCH_THRESHOLD);
+        } catch (e) {
+            setStatus('Could not load your face data. Please re-register your face in your profile.', 'error');
+            return;
+        }
+        startCamera();
+    }).catch(function () {
+        setStatus('Could not load face recognition models. Check your connection.', 'error');
+    });
+
+    function startCamera() {
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
+            .then(function (stream) {
+                video.srcObject = stream;
+                video.play();
+                setStatus('Camera ready — look at the camera to ' + actionLabel + '.', 'processing');
+
+                video.addEventListener('play', function () {
+                    var size = { width: 260, height: 195 };
+                    faceapi.matchDimensions(canvas, size);
+                    // Draw landmarks overlay
+                    setInterval(async function () {
+                        var dets = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
+                            .withFaceLandmarks().withFaceDescriptors();
+                        var resized = faceapi.resizeResults(dets, size);
+                        canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+                        faceapi.draw.drawDetections(canvas, resized);
+                        faceapi.draw.drawFaceLandmarks(canvas, resized);
+                    }, 100);
+                });
+
+                scanInterval = setInterval(scanFace, 1200);
+            })
+            .catch(function () {
+                setStatus('Camera access denied. Please allow camera permissions.', 'error');
+            });
+    }
+
+    async function scanFace() {
+        if (isSubmitting || !modelsLoaded || !faceMatcher) return;
+
+        var detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+            .withFaceLandmarks().withFaceDescriptor();
+
+        if (!detection || detection.detection.score < SCORE_THRESHOLD) {
+            setStatus('Position your face in the frame…', 'processing');
+            return;
+        }
+
+        var match = faceMatcher.findBestMatch(detection.descriptor);
+
+        if (match.label === 'self') {
+            setStatus('✓ Face verified! Recording ' + actionLabel + '…', 'success');
+            isSubmitting = true;
+            clearInterval(scanInterval);
+            // Stop camera
+            if (video.srcObject) {
+                video.srcObject.getTracks().forEach(function (t) { t.stop(); });
+            }
+            setTimeout(function () { actionForm.submit(); }, 1200);
+        } else {
+            setStatus('Face not recognized. Please look directly at the camera.', 'error');
+        }
+    }
+})();
+</script>
+@endif
 @endsection

@@ -196,43 +196,31 @@ class EmployeeTimetableController extends Controller
             'time_end_blocks' => ['required', 'array', 'min:1'],
             'time_end_blocks.*' => ['nullable', 'date_format:H:i'],
             'room' => ['required', 'string', 'max:64'],
-            'department_key' => ['required', Rule::in(SchedulingDepartmentService::KEYS)],
+            'department_key' => ['nullable', 'string'],
         ]);
 
         $employee = Employee::with('department')->findOrFail($validated['employee_id']);
-        $deptKey = strtoupper($validated['department_key']);
+
+        // Derive department_key from the selected section, then fall back to the hidden input,
+        // then fall back to the employee's own scheduling department key.
+        $classSectionId = $validated['class_section_id'] ?? null;
+        $classSection = $classSectionId ? ClassSection::findOrFail((int) $classSectionId) : null;
+
+        $deptKey = $classSection
+            ? strtoupper((string) $classSection->department_key)
+            : strtoupper((string) ($validated['department_key'] ?? ''));
+
+        if (!$deptKey) {
+            $deptKey = strtoupper((string) SchedulingDepartmentService::resolveEmployeeDepartmentKey($employee));
+        }
+
+        if (!$deptKey || !SchedulingDepartmentService::isValidKey($deptKey)) {
+            return back()->withInput()->withErrors([
+                'class_section_id' => 'Could not determine scheduling department. Select a class section or set the employee\'s scheduling department.',
+            ]);
+        }
 
         abort_unless($this->canEditDepartment($user, $deptKey), 403);
-
-        $resolved = SchedulingDepartmentService::resolveEmployeeDepartmentKey($employee);
-        if (!$resolved) {
-            return back()->withInput()->withErrors([
-                'employee_id' => 'Set this employee\'s scheduling department (IT, EDUC, or SHTM) on their profile before adding timetable entries.',
-            ]);
-        }
-        if ($resolved !== $deptKey) {
-            return back()->withInput()->withErrors([
-                'department_key' => 'Department must match the employee\'s scheduling department ('.$resolved.').',
-            ]);
-        }
-
-        $sectionsExist = ClassSection::query()->where('department_key', $deptKey)->exists();
-        $classSectionId = $validated['class_section_id'] ?? null;
-        if ($sectionsExist && !$classSectionId) {
-            return back()->withInput()->withErrors([
-                'class_section_id' => 'Select a class section (create one under Class sections if needed).',
-            ]);
-        }
-
-        $classSection = null;
-        if ($classSectionId) {
-            $classSection = ClassSection::findOrFail((int) $classSectionId);
-            if (strtoupper((string) $classSection->department_key) !== $deptKey) {
-                return back()->withInput()->withErrors([
-                    'class_section_id' => 'Class section must belong to scheduling department '.$deptKey.'.',
-                ]);
-            }
-        }
 
         try {
             $blocks = $this->extractTimeBlocks(
@@ -294,39 +282,32 @@ class EmployeeTimetableController extends Controller
             'time_end_blocks' => ['required', 'array', 'min:1'],
             'time_end_blocks.*' => ['nullable', 'date_format:H:i'],
             'room' => ['required', 'string', 'max:64'],
-            'department_key' => ['required', Rule::in(SchedulingDepartmentService::KEYS)],
+            'department_key' => ['nullable', 'string'],
         ]);
 
         $employee = Employee::with('department')->findOrFail($validated['employee_id']);
-        $deptKey = strtoupper($validated['department_key']);
+
+        // Derive department_key from the selected section, then fall back to hidden input,
+        // then fall back to the employee's own scheduling department key.
+        $classSectionId = $validated['class_section_id'] ?? null;
+        $classSection = $classSectionId ? ClassSection::findOrFail((int) $classSectionId) : null;
+
+        $deptKey = $classSection
+            ? strtoupper((string) $classSection->department_key)
+            : strtoupper((string) ($validated['department_key'] ?? ''));
+
+        if (!$deptKey) {
+            $deptKey = strtoupper((string) SchedulingDepartmentService::resolveEmployeeDepartmentKey($employee));
+        }
+
+        if (!$deptKey || !SchedulingDepartmentService::isValidKey($deptKey)) {
+            return back()->withInput()->withErrors([
+                'class_section_id' => 'Could not determine scheduling department. Select a class section or set the employee\'s scheduling department.',
+            ]);
+        }
 
         abort_unless($this->canEditDepartment($user, $deptKey), 403);
         abort_unless($this->canEditDepartment($user, $entry->department_key), 403);
-
-        $resolved = SchedulingDepartmentService::resolveEmployeeDepartmentKey($employee);
-        if (!$resolved || $resolved !== $deptKey) {
-            return back()->withInput()->withErrors([
-                'department_key' => 'Department must match the employee\'s scheduling department.',
-            ]);
-        }
-
-        $sectionsExist = ClassSection::query()->where('department_key', $deptKey)->exists();
-        $classSectionId = $validated['class_section_id'] ?? null;
-        if ($sectionsExist && !$classSectionId) {
-            return back()->withInput()->withErrors([
-                'class_section_id' => 'Select a class section (create one under Class sections if needed).',
-            ]);
-        }
-
-        $classSection = null;
-        if ($classSectionId) {
-            $classSection = ClassSection::findOrFail((int) $classSectionId);
-            if (strtoupper((string) $classSection->department_key) !== $deptKey) {
-                return back()->withInput()->withErrors([
-                    'class_section_id' => 'Class section must belong to scheduling department '.$deptKey.'.',
-                ]);
-            }
-        }
 
         try {
             $blocks = $this->extractTimeBlocks(

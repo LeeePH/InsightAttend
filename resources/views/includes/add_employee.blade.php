@@ -38,6 +38,13 @@
                             <div class="form-row">
                                 <div class="col-md-6 mb-3">
                                     <label for="add_emp_position" class="font-weight-bold">Position</label>
+                                    {{-- Datalist shown only when Admin Department is selected --}}
+                                    <datalist id="add_emp_position_suggestions">
+                                        <option value="Secretary - IT">
+                                        <option value="Secretary - Educ">
+                                        <option value="Secretary - SHTM">
+                                    </datalist>
+                                    {{-- Single input: type freely or pick from datalist suggestions --}}
                                     <input type="text" class="form-control" placeholder="Job title" id="add_emp_position" name="position" required autocomplete="organization-title" maxlength="64" />
                                     <div class="add-emp-err text-danger small mt-1" data-for="position" role="alert" style="display:none;"></div>
                                 </div>
@@ -46,7 +53,7 @@
                                     <select class="form-control" id="add_emp_department" name="department_id" required>
                                         <option value="" selected>Select department</option>
                                         @foreach(($departments ?? []) as $dept)
-                                            <option value="{{ $dept->id }}">{{ $dept->name }}</option>
+                                            <option value="{{ $dept->id }}" data-name="{{ $dept->name }}">{{ $dept->name }}</option>
                                         @endforeach
                                     </select>
                                     <div class="add-emp-err text-danger small mt-1" data-for="department_id" role="alert" style="display:none;"></div>
@@ -54,11 +61,13 @@
                             </div>
                             <div class="form-row">
                                 <div class="col-md-6 mb-3">
-                                    <label for="add_emp_portal_role" class="font-weight-bold">Role</label>
-                                    <select class="form-control" id="add_emp_portal_role" name="portal_role" required>
-                                        <option value="employee" {{ old('portal_role', 'employee') === 'employee' ? 'selected' : '' }}>Employee</option>
-                                        <option value="secretary" {{ old('portal_role') === 'secretary' ? 'selected' : '' }}>Secretary</option>
-                                    </select>
+                                    <label for="add_emp_employee_number" class="font-weight-bold">Employee Number</label>
+                                    <input type="text" class="form-control" id="add_emp_employee_number" name="employee_number"
+                                           placeholder="e.g. 24-0001 (optional)"
+                                           pattern="\d{2}-\d{4}"
+                                           maxlength="20"
+                                           title="Format: 2X-XXXX (e.g. 24-0001)">
+                                    <div class="add-emp-err text-danger small mt-1" data-for="employee_number" role="alert" style="display:none;"></div>
                                 </div>
                                 <div class="col-md-6 mb-3" id="add_secretary_managed_wrap" style="display: none;">
                                     <label for="add_emp_managed_dept" class="font-weight-bold">Department management</label>
@@ -72,15 +81,17 @@
                                     <div class="add-emp-err text-danger small mt-1" data-for="schedule_department_key" role="alert" style="display:none;"></div>
                                 </div>
                             </div>
+                            {{-- Hidden portal_role — always employee unless secretary dept is set --}}
+                            <input type="hidden" name="portal_role" id="add_emp_portal_role" value="employee">
                             <div class="form-row">
                                 <div class="col-md-6 mb-3">
                                     <label for="add_emp_email" class="font-weight-bold">Email</label>
-                                    <input type="email" class="form-control" id="add_emp_email" name="email" autocomplete="email" placeholder="name@school.edu">
+                                    <input type="email" class="form-control" id="add_emp_email" name="email" autocomplete="email" placeholder="youremail@gmail.com">
                                     <div class="add-emp-err text-danger small mt-1" data-for="email" role="alert" style="display:none;"></div>
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label for="add_emp_phone" class="font-weight-bold">Phone (SMS)</label>
-                                    <input type="text" class="form-control" id="add_emp_phone" name="phone" placeholder="+639xxxxxxxxx">
+                                    <input type="text" class="form-control" id="add_emp_phone" name="phone" placeholder="+639">
                                 </div>
                             </div>
                             <div class="form-row">
@@ -89,27 +100,36 @@
                                     <input type="date" class="form-control" id="add_emp_date_hired" name="date_hired" value="{{ old('date_hired', date('Y-m-d')) }}">
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label for="add_emp_employment_type" class="font-weight-bold">Employment type</label>
+                                    <label for="add_emp_employment_type" class="font-weight-bold">Employment Status</label>
                                     <select class="form-control" id="add_emp_employment_type" name="employment_type">
                                         <option value="">Select</option>
-                                        <option value="full_time">Full-time</option>
-                                        <option value="part_time">Part-time</option>
+                                        <option value="regular">Regular Employee</option>
+                                        <option value="probationary">Probationary</option>
+                                        <option value="consultant">Consultant</option>
+                                        <option value="trainee">Trainee</option>
                                     </select>
                                 </div>
                             </div>
                             <div class="form-group mb-3">
                                 <label for="add_emp_password" class="font-weight-bold">Login password</label>
-                                <input type="password" class="form-control" id="add_emp_password" name="password" placeholder="Optional — min. 8 characters" autocomplete="new-password" minlength="8">
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="add_emp_password" name="password" placeholder="Optional — min. 8 characters" autocomplete="new-password" minlength="8">
+                                    <div class="input-group-append">
+                                        <button type="button" class="btn btn-outline-secondary" id="toggleAddPassword" tabindex="-1" title="Show/hide password">
+                                            <i class="fa fa-eye" id="toggleAddPasswordIcon"></i>
+                                        </button>
+                                    </div>
+                                </div>
                                 <small class="text-muted d-block mt-1">If set, email is required. Role applies to that login.</small>
                                 <div class="add-emp-err text-danger small mt-1" data-for="password" role="alert" style="display:none;"></div>
                             </div>
                             <div class="form-group mb-3">
-                                <label for="add_emp_skills" class="font-weight-bold">Skills &amp; expertise</label>
-                                <textarea class="form-control" id="add_emp_skills" name="skills" rows="2" placeholder="One per line"></textarea>
+                                <label for="add_emp_educational_background" class="font-weight-bold">Educational Background</label>
+                                <textarea class="form-control" id="add_emp_educational_background" name="educational_background" rows="2" placeholder="One entry per line (e.g. BS Computer Science, University of Santo Tomas)"></textarea>
                             </div>
                             <div class="form-group mb-3">
-                                <label for="add_emp_achievements" class="font-weight-bold">Achievements</label>
-                                <textarea class="form-control" id="add_emp_achievements" name="achievements" rows="2" placeholder="One per line"></textarea>
+                                <label for="add_emp_work_experience" class="font-weight-bold">Work Experience</label>
+                                <textarea class="form-control" id="add_emp_work_experience" name="work_experience" rows="2" placeholder="One entry per line (e.g. Software Engineer at Acme Corp, 2020-2023)"></textarea>
                             </div>
                             <div class="form-row">
                                 <div class="col-md-4 mb-3">
@@ -161,3 +181,88 @@
         </div>
     </div>
 </div>
+
+<script>
+(function () {
+    var btn  = document.getElementById('toggleAddPassword');
+    var inp  = document.getElementById('add_emp_password');
+    var icon = document.getElementById('toggleAddPasswordIcon');
+    if (btn && inp && icon) {
+        btn.addEventListener('click', function () {
+            var isHidden = inp.type === 'password';
+            inp.type = isHidden ? 'text' : 'password';
+            icon.className = isHidden ? 'fa fa-eye-slash' : 'fa fa-eye';
+        });
+    }
+})();
+</script>
+
+<script>
+(function () {
+    var deptSel     = document.getElementById('add_emp_department');
+    var posText     = document.getElementById('add_emp_position');
+    var roleInput   = document.getElementById('add_emp_portal_role');
+    var managedWrap = document.getElementById('add_secretary_managed_wrap');
+    var managedDept = document.getElementById('add_emp_managed_dept');
+    var datalist    = document.getElementById('add_emp_position_suggestions');
+
+    var secretaryDeptMap = {
+        'Secretary - IT':   'IT',
+        'Secretary - Educ': 'EDUC',
+        'Secretary - SHTM': 'SHTM'
+    };
+
+    function isAdminDept() {
+        var opt = deptSel ? deptSel.options[deptSel.selectedIndex] : null;
+        return opt && opt.getAttribute('data-name') === 'Admin Department';
+    }
+
+    // Attach or detach the datalist based on department
+    function syncDatalist() {
+        if (!posText || !datalist) return;
+        if (isAdminDept()) {
+            posText.setAttribute('list', 'add_emp_position_suggestions');
+        } else {
+            posText.removeAttribute('list');
+        }
+    }
+
+    // When a Secretary suggestion is picked, auto-set role and dept management
+    function onPositionInput() {
+        var val = posText ? posText.value : '';
+        var deptKey = secretaryDeptMap[val] || '';
+        if (!roleInput || !managedWrap || !managedDept) return;
+        if (deptKey && isAdminDept()) {
+            roleInput.value = 'secretary';
+            managedDept.value = deptKey;
+            managedWrap.style.display = '';
+        } else if (!deptKey && isAdminDept()) {
+            // typed something custom — clear secretary auto-assignment
+            roleInput.value = 'employee';
+            managedDept.value = '';
+            managedWrap.style.display = 'none';
+        }
+        if (typeof window.refreshEmployeeAddValidation === 'function') {
+            window.refreshEmployeeAddValidation();
+        }
+    }
+
+    if (deptSel) {
+        deptSel.addEventListener('change', function () {
+            syncDatalist();
+            // Clear secretary state when switching away from Admin
+            if (!isAdminDept() && roleInput) {
+                roleInput.value = 'employee';
+                if (managedDept) managedDept.value = '';
+                if (managedWrap) managedWrap.style.display = 'none';
+            }
+        });
+    }
+    if (posText) {
+        posText.addEventListener('input', onPositionInput);
+        posText.addEventListener('change', onPositionInput);
+    }
+
+    syncDatalist();
+})();
+</script>

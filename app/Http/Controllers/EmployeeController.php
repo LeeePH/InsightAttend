@@ -7,6 +7,7 @@ use App\Models\Employee;
 use App\Models\Role;
 use App\Models\Schedule;
 use App\Models\Department;
+use App\Http\Controllers\DepartmentController;
 use App\Http\Requests\EmployeeRec;
 use RealRashid\SweetAlert\Facades\Alert;
 use App\Models\EmployeeShiftRotation;
@@ -17,8 +18,9 @@ class EmployeeController extends Controller
     {
         $employee->date_hired = $request->input('date_hired');
         $employee->employment_type = $request->input('employment_type');
-        $employee->skills = $request->input('skills');
-        $employee->achievements = $request->input('achievements');
+        $employee->employee_number = $request->input('employee_number') ?: null;
+        $employee->educational_background = $request->input('educational_background');
+        $employee->work_experience = $request->input('work_experience');
         $employee->emergency_contact_name = $request->input('emergency_contact_name');
         $employee->emergency_contact_relationship = $request->input('emergency_contact_relationship');
         $employee->emergency_contact_phone = $request->input('emergency_contact_phone');
@@ -26,6 +28,7 @@ class EmployeeController extends Controller
    
     public function index()
     {
+        DepartmentController::ensureFixedDepartments();
         return view('admin.employee')->with([
             'employees' => Employee::with(['department', 'user.roles'])->get(),
             'schedules' => Schedule::all(),

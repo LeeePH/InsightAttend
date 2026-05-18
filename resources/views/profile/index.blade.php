@@ -10,8 +10,8 @@
     $profilePosition = $employee?->position;
     $profileDateHired = $employee?->date_hired ?? $employee?->created_at;
     $profileType = $employee?->employment_type === 'part_time' ? 'Part-time' : ($employee?->employment_type === 'full_time' ? 'Full-time' : 'Not set');
-    $profileSkills = collect(preg_split('/\r\n|\r|\n/', (string) ($employee?->skills ?? '')))->map(fn ($item) => trim($item))->filter();
-    $profileAchievements = collect(preg_split('/\r\n|\r|\n/', (string) ($employee?->achievements ?? '')))->map(fn ($item) => trim($item))->filter();
+    $profileSkills = collect(preg_split('/\r\n|\r|\n/', (string) ($employee?->educational_background ?? '')))->map(fn ($item) => trim($item))->filter();
+    $profileAchievements = collect(preg_split('/\r\n|\r|\n/', (string) ($employee?->work_experience ?? '')))->map(fn ($item) => trim($item))->filter();
     $avatarImage = $employee?->face_image;
     $avatarSrc = null;
 
@@ -30,8 +30,9 @@
         'phone',
         'date_hired',
         'employment_type',
-        'skills',
-        'achievements',
+        'employee_number',
+        'educational_background',
+        'work_experience',
         'emergency_contact_name',
         'emergency_contact_relationship',
         'emergency_contact_phone',
@@ -251,6 +252,10 @@
                 <div class="detail-card">
                     <h5 class="section-title">Employment Details</h5>
                     <div class="mb-3">
+                        <span class="detail-label">Employee Number</span>
+                        <div class="detail-value">{{ $employee?->employee_number ?: 'Not set' }}</div>
+                    </div>
+                    <div class="mb-3">
                         <span class="detail-label">Position</span>
                         <div class="detail-value">{{ $profilePosition ?: 'Not set' }}</div>
                     </div>
@@ -305,7 +310,7 @@
         <div class="row">
             <div class="col-lg-6 mb-4">
                 <div class="detail-card list-card">
-                    <h5 class="section-title">Skills & Expertise</h5>
+                    <h5 class="section-title">Educational Background</h5>
                     @if ($profileSkills->count())
                         <ul>
                             @foreach ($profileSkills as $skill)
@@ -313,14 +318,14 @@
                             @endforeach
                         </ul>
                     @else
-                        <div class="detail-value">No skills added yet.</div>
+                        <div class="detail-value">No educational background added yet.</div>
                     @endif
                 </div>
             </div>
 
             <div class="col-lg-6 mb-4">
                 <div class="detail-card list-card">
-                    <h5 class="section-title">Achievements</h5>
+                    <h5 class="section-title">Work Experience</h5>
                     @if ($profileAchievements->count())
                         <ul>
                             @foreach ($profileAchievements as $achievement)
@@ -328,7 +333,7 @@
                             @endforeach
                         </ul>
                     @else
-                        <div class="detail-value">No achievements added yet.</div>
+                        <div class="detail-value">No work experience added yet.</div>
                     @endif
                 </div>
             </div>
@@ -416,20 +421,31 @@
                                     </div>
                                 </div>
                                 <div class="form-group">
+                                    <label for="profile_employee_number">Employee Number</label>
+                                    <input type="text" class="form-control @error('employee_number') is-invalid @enderror"
+                                           id="profile_employee_number" name="employee_number"
+                                           value="{{ old('employee_number', $employee->employee_number) }}"
+                                           placeholder="e.g. 24-0001"
+                                           pattern="\d{2}-\d{4}"
+                                           maxlength="20">
+                                    <small class="text-muted">Format: 2X-XXXX (e.g. 24-0001)</small>
+                                    @error('employee_number')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                                </div>
+                                <div class="form-group">
                                     <label for="profile_photo">Profile Picture</label>
                                     <input type="file" class="form-control-file @error('profile_photo') is-invalid @enderror" id="profile_photo" name="profile_photo" accept="image/*">
                                     <div class="profile-upload-help mt-2">Upload a new employee picture in JPG, PNG, or WEBP format. Max size: 5 MB.</div>
                                     @error('profile_photo')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                                 </div>
                                 <div class="form-group">
-                                    <label for="profile_skills">Skills & Expertise</label>
-                                    <textarea class="form-control @error('skills') is-invalid @enderror" id="profile_skills" name="skills" rows="4" placeholder="One skill per line">{{ old('skills', $employee->skills) }}</textarea>
-                                    @error('skills')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                                    <label for="profile_educational_background">Educational Background</label>
+                                    <textarea class="form-control @error('educational_background') is-invalid @enderror" id="profile_educational_background" name="educational_background" rows="4" placeholder="One entry per line (e.g. BS Computer Science, University of Santo Tomas)">{{ old('educational_background', $employee->educational_background) }}</textarea>
+                                    @error('educational_background')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                                 </div>
                                 <div class="form-group">
-                                    <label for="profile_achievements">Achievements</label>
-                                    <textarea class="form-control @error('achievements') is-invalid @enderror" id="profile_achievements" name="achievements" rows="4" placeholder="One achievement per line">{{ old('achievements', $employee->achievements) }}</textarea>
-                                    @error('achievements')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                                    <label for="profile_work_experience">Work Experience</label>
+                                    <textarea class="form-control @error('work_experience') is-invalid @enderror" id="profile_work_experience" name="work_experience" rows="4" placeholder="One entry per line (e.g. Software Engineer at Acme Corp, 2020-2023)">{{ old('work_experience', $employee->work_experience) }}</textarea>
+                                    @error('work_experience')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                                 </div>
                                 <div class="form-row">
                                     <div class="form-group col-md-4">

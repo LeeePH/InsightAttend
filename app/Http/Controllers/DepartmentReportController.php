@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Department;
 use App\Models\Employee;
+use App\Http\Controllers\DepartmentController;
 use App\Services\AttendanceStatusService;
 use Carbon\Carbon;
 
@@ -38,6 +39,7 @@ class DepartmentReportController extends Controller
             [$start, $end] = [$end, $start];
         }
 
+        DepartmentController::ensureFixedDepartments();
         $departments = Department::query()->orderBy('name')->get();
         $selectedDepartment = $departmentId ? Department::find($departmentId) : null;
 
