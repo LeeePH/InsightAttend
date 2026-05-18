@@ -68,6 +68,16 @@ class AttendanceStatusService
             } else {
                 $statusLabel = ((int) ($timeInRow->status ?? 1) === 0) ? 'Late' : 'Present';
             }
+        } elseif ($expectedStart) {
+            // Only mark Absent once the grace window has fully elapsed.
+            // Before that point the employee still has time to clock in.
+            $deadline = $expectedStart->copy()->addMinutes(max(0, $grace));
+            $now = Carbon::now();
+            if ($now->lt($deadline)) {
+                // Shift hasn't started yet (or still within grace) — not absent yet
+                $statusLabel = 'Pending';
+            }
+            // else: past the deadline with no time-in → Absent (default)
         }
 
         $workedSeconds = null;

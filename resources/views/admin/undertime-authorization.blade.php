@@ -9,6 +9,7 @@
             <div class="card-body">
                 <h4 class="mt-0 header-title">Undertime Authorization Requests</h4>
                 <p class="text-muted mb-3">Review employee undertime authorization forms.</p>
+                @php $canManageUndertime = auth()->user()->hasRole('admin'); @endphp
 
                 <div class="table-responsive">
                     <table class="table table-bordered dt-responsive nowrap" style="border-collapse: collapse; border-spacing: 0; width: 100%;">
@@ -16,7 +17,9 @@
                             <tr>
                                 <th>ID</th>
                                 <th>Employee</th>
+                                <th>Department</th>
                                 <th>Date Filed</th>
+                                <th>Reason</th>
                                 <th>Rows</th>
                                 <th>Status</th>
                                 <th>Action</th>
@@ -27,7 +30,22 @@
                             <tr>
                                 <td>{{ $req->id }}</td>
                                 <td>{{ $req->employee_name }}</td>
+                                <td>{{ $req->employee_department ?: '-' }}</td>
                                 <td>{{ \Carbon\Carbon::parse($req->date_filed)->format('M d, Y') }}</td>
+                                <td style="min-width: 250px; white-space: normal;">
+                                    @php
+                                        $reasons = collect((array) $req->entries)
+                                            ->pluck('reason')
+                                            ->filter(fn ($reason) => filled($reason))
+                                            ->unique()
+                                            ->values();
+                                    @endphp
+                                    @forelse($reasons as $reason)
+                                        <div>{{ $reason }}</div>
+                                    @empty
+                                        <span class="text-muted">-</span>
+                                    @endforelse
+                                </td>
                                 <td>{{ is_array($req->entries) ? count($req->entries) : 0 }}</td>
                                 <td>
                                     @if((int)$req->status === 0)<span class="badge badge-warning">Pending</span>
@@ -38,7 +56,7 @@
                                 <td class="text-nowrap">
                                     <a href="{{ route('undertime_authorization.show', $req->id) }}" class="btn btn-outline-secondary btn-sm mb-2"><i class="fa fa-eye"></i></a>
 
-                                    @if((int)$req->status === 0)
+                                    @if($canManageUndertime && (int)$req->status === 0)
                                     <form action="{{ route('undertime_authorization.approve', $req->id) }}" method="POST" style="display:inline-block;">
                                         @csrf
                                         @method('PUT')
@@ -53,13 +71,15 @@
                                     </form>
                                     @endif
 
+                                    @if($canManageUndertime)
                                     <form action="{{ route('undertime_authorization.destroy', $req->id) }}" method="POST" style="display:inline-block;" class="ml-1" onsubmit="return confirm('Delete this undertime authorization request?');">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-secondary btn-sm">Delete</button>
                                     </form>
+                                    @endif
 
-                                    @if((int)$req->status === 1)
+                                    @if($canManageUndertime && (int)$req->status === 1)
                                     <a href="{{ route('undertime_authorization.approvalLetterPdf', $req->id) }}" class="btn btn-outline-primary btn-sm ml-1"><i class="fa fa-download"></i></a>
                                     @endif
                                 </td>

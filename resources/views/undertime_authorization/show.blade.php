@@ -65,7 +65,7 @@
                 </div>
 
                 <div class="mt-3">
-                    @if((int)$requestItem->status === 1)
+                    @if(auth()->user()->hasRole('admin') && (int)$requestItem->status === 1)
                     <a href="{{ route('undertime_authorization.approvalLetterPdf', $requestItem->id) }}" class="btn theme-btn"><i class="fa fa-download"></i> Download PDF</a>
                     @endif
                     <a href="{{ url()->previous() }}" class="btn theme-btn ml-2"><i class="fa fa-arrow-left"></i> Back</a>

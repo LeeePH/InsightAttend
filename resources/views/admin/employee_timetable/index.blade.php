@@ -150,8 +150,8 @@
                         @forelse($entries as $row)
                             @php $isToday = (int) $row->day_of_week === $todayDow; @endphp
                             <tr class="{{ $isToday ? 'timetable-row-today' : '' }}">
-                                <td class="col-center">{{ $row->course?->code ?: '-' }}</td>
-                                <td class="col-emp">{{ $row->course?->name ?: '-' }}</td>
+                                <td class="col-center">{{ ($row->subject ?? $row->course)?->code ?: '-' }}</td>
+                                <td class="col-emp">{{ ($row->subject ?? $row->course)?->name ?: '-' }}</td>
                                 <td class="col-center">
                                     {{ $dayShort((int) $row->day_of_week) }}
                                     @if($isToday)
@@ -196,7 +196,7 @@
                         <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                     </div>
                     <div class="modal-body">
-                        @include('admin.employee_timetable._form_fields', ['employees' => $employees, 'courses' => $courses, 'classSections' => $classSections])
+                        @include('admin.employee_timetable._form_fields', ['employees' => $employees, 'subjects' => $subjects, 'classSections' => $classSections])
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
@@ -221,7 +221,7 @@
                         <div class="modal-body">
                             @include('admin.employee_timetable._form_fields', [
                                 'employees' => $employees,
-                                'courses' => $courses,
+                                'subjects' => $subjects,
                                 'classSections' => $classSections,
                                 'entry' => $row,
                             ])

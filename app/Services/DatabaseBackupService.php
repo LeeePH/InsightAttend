@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\Department;
 use Database\Seeders\AdminUserSeeder;
+use Database\Seeders\CourseSeeder;
+use Database\Seeders\SubjectSeeder;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Artisan;
@@ -21,6 +23,9 @@ class DatabaseBackupService
         'Finance Department',
         'Registrar Department',
         'HR department',
+        'IT Department',
+        'Education Department',
+        'SHTM Department',
     ];
 
     public function createBackup(?string $label = null): array
@@ -217,6 +222,8 @@ class DatabaseBackupService
         });
 
         Artisan::call('db:seed', ['--class' => AdminUserSeeder::class, '--force' => true]);
+        Artisan::call('db:seed', ['--class' => CourseSeeder::class, '--force' => true]);
+        Artisan::call('db:seed', ['--class' => SubjectSeeder::class, '--force' => true]);
         $this->restoreFixedDepartments();
     }
 

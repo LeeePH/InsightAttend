@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Course;
 use App\Models\Employee;
 use App\Models\MaintenanceRecord;
+use App\Models\Subject;
 use App\Models\TimetableSetting;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -18,10 +19,12 @@ class MaintenanceController extends Controller
     public function formBuilder(): View
     {
         $courses = Course::query()->orderBy('code')->orderBy('name')->get();
+        $subjects = Subject::query()->orderBy('code')->orderBy('name')->get();
         TimetableSetting::setValue('school_address', self::FIXED_SCHOOL_ADDRESS);
 
         return view('admin.maintenance-form', [
             'courses' => $courses,
+            'subjects' => $subjects,
             'timetableSettings' => [
                 'school_name' => TimetableSetting::getValue('school_name', 'Colegio de Sta. Teresa De Avila'),
                 'school_address' => self::FIXED_SCHOOL_ADDRESS,
@@ -65,6 +68,43 @@ class MaintenanceController extends Controller
         $course->delete();
 
         flash()->success('Success', 'Course deleted successfully.');
+
+        return redirect()->route('admin.maintenance_form');
+    }
+
+    public function storeSubject(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'code' => ['required', 'string', 'max:30', 'unique:subjects,code'],
+            'name' => ['required', 'string', 'max:150'],
+        ]);
+
+        Subject::create($validated);
+
+        flash()->success('Success', 'Subject added successfully.');
+
+        return redirect()->route('admin.maintenance_form');
+    }
+
+    public function updateSubject(Request $request, Subject $subject): RedirectResponse
+    {
+        $validated = $request->validate([
+            'code' => ['required', 'string', 'max:30', 'unique:subjects,code,' . $subject->id],
+            'name' => ['required', 'string', 'max:150'],
+        ]);
+
+        $subject->update($validated);
+
+        flash()->success('Success', 'Subject updated successfully.');
+
+        return redirect()->route('admin.maintenance_form');
+    }
+
+    public function destroySubject(Subject $subject): RedirectResponse
+    {
+        $subject->delete();
+
+        flash()->success('Success', 'Subject deleted successfully.');
 
         return redirect()->route('admin.maintenance_form');
     }

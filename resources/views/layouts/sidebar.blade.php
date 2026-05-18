@@ -132,6 +132,71 @@
                                 </a>
                             </li> --}}
                                 @elseif(auth()->user()->hasAnyRole(['hr', 'secretary']))
+                            @if(auth()->user()->hasRole('secretary'))
+                            <li class="menu-title">My Portal</li>
+                            <li class="">
+                                <a href="{{ route('employee.dashboard') }}" class="waves-effect {{ request()->is("employee/dashboard") ? "mm active" : "" }}">
+                                    <i class="ti-home"></i> <span> Dashboard </span>
+                                </a>
+                            </li>
+                            <li class="">
+                                <a href="{{ route('employee.attendance_logs') }}" class="waves-effect {{ request()->is("employee/attendance-logs") ? "mm active" : "" }}">
+                                    <i class="ti-calendar"></i> <span> Attendance Logs </span>
+                                </a>
+                            </li>
+                            <li class="{{ (request()->is('leave/request') || request()->is('resignation/request') || request()->is('loan/request') || request()->is('discount/request') || request()->is('overtime-authorization/request') || request()->is('undertime-authorization') || request()->is('undertime-authorization/*') || request()->is('permit-to-teach-outside/request') || request()->is('subsitution/request')) ? 'mm-active' : '' }}">
+                                <a href="javascript:void(0);" class="has-arrow waves-effect {{ (request()->is('leave/request') || request()->is('resignation/request') || request()->is('loan/request') || request()->is('discount/request') || request()->is('overtime-authorization/request') || request()->is('undertime-authorization') || request()->is('undertime-authorization/*') || request()->is('permit-to-teach-outside/request') || request()->is('subsitution/request')) ? 'mm active' : '' }}">
+                                    <i class="dripicons-backspace"></i> <span> Requests </span>
+                                </a>
+                                <ul class="submenu" aria-expanded="false">
+                                    <li>
+                                        <a href="{{ route('leave.request') }}" class="waves-effect {{ request()->is('leave/request') ? 'mm active' : '' }}">
+                                            <span>Request Leave</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="{{ route('resignation.request') }}" class="waves-effect {{ request()->is('resignation/request') ? 'mm active' : '' }}">
+                                            <span>Resignation Request</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="{{ route('loan.request') }}" class="waves-effect {{ request()->is('loan/request') ? 'mm active' : '' }}">
+                                            <span>Company Loan Application</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="{{ route('discount.request') }}" class="waves-effect {{ request()->is('discount/request') ? 'mm active' : '' }}">
+                                            <span>Application for Discount</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="{{ route('overtime_authorization.request') }}" class="waves-effect {{ request()->is('overtime-authorization/request') ? 'mm active' : '' }}">
+                                            <span>Overtime Authorization Form</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="{{ route('undertime_authorization.request') }}" class="waves-effect {{ request()->is('undertime-authorization/request') ? 'mm active' : '' }}">
+                                            <span>Undertime Authorization Form</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="{{ route('undertime_authorization.admin') }}" class="waves-effect {{ (request()->is('undertime-authorization') || request()->is('undertime-authorization/*')) ? 'mm active' : '' }}">
+                                            <span>Review Undertime Requests</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="{{ route('permit_to_teach_outside.request') }}" class="waves-effect {{ request()->is('permit-to-teach-outside/request') ? 'mm active' : '' }}">
+                                            <span>Permit to Teach Outside Form</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="{{ route('substitution.request') }}" class="waves-effect {{ request()->is('subsitution/request') ? 'mm active' : '' }}">
+                                            <span>Substitution Form</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                            @endif
                             <li class="menu-title">Scheduling</li>
                             <li class="">
                                 <a href="{{ route('employee_timetable.index') }}" class="waves-effect {{ request()->is("employee-timetable") || request()->is("employee-timetable/*") ? "mm active" : "" }}">
@@ -151,11 +216,19 @@
                             </li>
                             @endif
                             <li class="menu-title">Account</li>
+                            @if(auth()->user()->hasRole('secretary'))
+                            <li class="">
+                                <a href="{{ route('employee.settings') }}" class="waves-effect {{ request()->is("employee/settings") ? "mm active" : "" }}">
+                                    <i class="fa fa-cog"></i> <span> Account Settings </span>
+                                </a>
+                            </li>
+                            @else
                             <li class="">
                                 <a href="{{ route('profile') }}" class="waves-effect {{ request()->is("profile") ? "mm active" : "" }}">
                                     <i class="mdi mdi-account-circle"></i> <span> Profile </span>
                                 </a>
                             </li>
+                            @endif
                                 @elseif(auth()->user()->hasRole('employee'))
                             <li class="menu-title">Employee Menu</li>
                             <li class="">

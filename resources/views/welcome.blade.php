@@ -517,8 +517,11 @@
                 @if(auth()->user()->hasRole('admin'))
                     <a href="{{ url('/admin') }}" class="primary">Dashboard</a>
                 @endif
-                @if(auth()->user()->hasRole('employee'))
+                @if(auth()->user()->hasAnyRole(['employee', 'secretary']))
                     <a href="{{ url('/employee/dashboard') }}">Dashboard</a>
+                @endif
+                @if(auth()->user()->hasRole('hr'))
+                    <a href="{{ route('employee_timetable.index') }}">Dashboard</a>
                 @endif
                 <a href="{{ route('logout') }}"
                    title="Signed in as {{ auth()->user()->name }}"

@@ -48,6 +48,10 @@ class LoginController extends Controller
         }
 
         if ($user->hasAnyRole(['hr', 'secretary'])) {
+            // Secretary has an employee record — send them to their personal dashboard first
+            if ($user->hasRole('secretary') && $user->employee) {
+                return redirect()->route('employee.dashboard');
+            }
             return redirect()->route('employee_timetable.index');
         }
 

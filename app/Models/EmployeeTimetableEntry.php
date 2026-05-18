@@ -10,6 +10,7 @@ class EmployeeTimetableEntry extends Model
     protected $fillable = [
         'employee_id',
         'course_id',
+        'subject_id',
         'class_section_id',
         'day_of_week',
         'time_start',
@@ -53,6 +54,11 @@ class EmployeeTimetableEntry extends Model
     public function course(): BelongsTo
     {
         return $this->belongsTo(Course::class, 'course_id');
+    }
+
+    public function subject(): BelongsTo
+    {
+        return $this->belongsTo(Subject::class, 'subject_id');
     }
 
     public function classSection(): BelongsTo

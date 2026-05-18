@@ -17,6 +17,17 @@
             letter-spacing: 0.04em;
             text-align: center;
         }
+        .subject-code {
+            display: inline-block;
+            min-width: 88px;
+            padding: 0.35rem 0.65rem;
+            border-radius: 999px;
+            background: #e4edf7;
+            color: #1a3a5c;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-align: center;
+        }
     </style>
 @endsection
 
@@ -40,6 +51,8 @@
     @endif
 
     <div class="row">
+
+        {{-- ── School Settings ── --}}
         <div class="col-12 mb-4">
             <div class="card">
                 <div class="card-body">
@@ -82,7 +95,8 @@
             </div>
         </div>
 
-        <div class="col-12">
+        {{-- ── Course Management ── --}}
+        <div class="col-12 mb-4">
             <div class="card">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -126,8 +140,59 @@
                 </div>
             </div>
         </div>
+
+        {{-- ── Subject Management ── --}}
+        <div class="col-12 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h5 class="mb-0" style="color:#1a3a5c;font-weight:700;">Subject Management</h5>
+                            <small class="text-muted">Subjects appear in the Course Description dropdown when building schedules.</small>
+                        </div>
+                        <a href="#addSubjectModal" data-toggle="modal" class="btn btn-info btn-sm btn-flat">
+                            Add Subject
+                        </a>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-striped table-bordered course-table mb-0">
+                            <thead>
+                                <tr>
+                                    <th style="width: 140px;">Subject Code</th>
+                                    <th>Subject Name</th>
+                                    <th style="width: 170px;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($subjects as $subject)
+                                    <tr>
+                                        <td><span class="subject-code">{{ $subject->code }}</span></td>
+                                        <td class="font-weight-bold">{{ $subject->name }}</td>
+                                        <td class="text-nowrap">
+                                            <a href="#editSubjectModal{{ $subject->id }}" data-toggle="modal" class="btn btn-success btn-sm btn-flat">
+                                                <i class="fa fa-edit"></i> Edit
+                                            </a>
+                                            <a href="#deleteSubjectModal{{ $subject->id }}" data-toggle="modal" class="btn btn-danger btn-sm btn-flat">
+                                                <i class="fa fa-trash"></i> Delete
+                                            </a>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="3" class="text-center text-muted py-4">No subjects added yet.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
+    {{-- ── Course Modals ── --}}
     <div class="modal fade" id="addCourseModal" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -143,7 +208,7 @@
                         <div class="form-row">
                             <div class="form-group col-md-4">
                                 <label>Course Code</label>
-                                <input type="text" name="code" class="form-control" placeholder="BSIT" required maxlength="30">
+                                <input type="text" name="code" class="form-control" placeholder="e.g. BSIT" required maxlength="30">
                             </div>
                             <div class="form-group col-md-8">
                                 <label>Course Name</label>
@@ -208,7 +273,7 @@
                         @method('DELETE')
                         <div class="modal-body">
                             <p class="mb-2">Are you sure you want to delete this course?</p>
-                            <div class="font-weight-bold">{{ $course->code }} - {{ $course->name }}</div>
+                            <div class="font-weight-bold">{{ $course->code }} — {{ $course->name }}</div>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-light" data-dismiss="modal">Close</button>
@@ -219,4 +284,98 @@
             </div>
         </div>
     @endforeach
+
+    {{-- ── Subject Modals ── --}}
+    <div class="modal fade" id="addSubjectModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title"><b>Add Subject</b></h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form method="POST" action="{{ route('admin.maintenance_form.subjects.store') }}">
+                    @csrf
+                    <div class="modal-body">
+                        <div class="form-row">
+                            <div class="form-group col-md-4">
+                                <label>Subject Code</label>
+                                <input type="text" name="code" class="form-control" placeholder="e.g. IT 101" required maxlength="30">
+                            </div>
+                            <div class="form-group col-md-8">
+                                <label>Subject Name</label>
+                                <input type="text" name="name" class="form-control" placeholder="e.g. Introduction to Computing" required maxlength="150">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-info">Save Subject</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    @foreach($subjects as $subject)
+        <div class="modal fade" id="editSubjectModal{{ $subject->id }}" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title"><b>Edit Subject</b></h4>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <form method="POST" action="{{ route('admin.maintenance_form.subjects.update', $subject) }}">
+                        @csrf
+                        @method('PUT')
+                        <div class="modal-body">
+                            <div class="form-row">
+                                <div class="form-group col-md-4">
+                                    <label>Subject Code</label>
+                                    <input type="text" name="code" class="form-control" value="{{ $subject->code }}" required maxlength="30">
+                                </div>
+                                <div class="form-group col-md-8">
+                                    <label>Subject Name</label>
+                                    <input type="text" name="name" class="form-control" value="{{ $subject->name }}" required maxlength="150">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-light" data-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-success">Update Subject</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="deleteSubjectModal{{ $subject->id }}" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title"><b>Delete Subject</b></h4>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <form method="POST" action="{{ route('admin.maintenance_form.subjects.destroy', $subject) }}">
+                        @csrf
+                        @method('DELETE')
+                        <div class="modal-body">
+                            <p class="mb-2">Are you sure you want to delete this subject?</p>
+                            <div class="font-weight-bold">{{ $subject->code }} — {{ $subject->name }}</div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-light" data-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-danger">Delete Subject</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endforeach
+
 @endsection

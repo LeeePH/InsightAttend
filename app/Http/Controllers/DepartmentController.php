@@ -15,6 +15,8 @@ class DepartmentController extends Controller
         'Registrar Department',
         'HR department',
         'IT Department',
+        'Education Department',
+        'SHTM Department',
     ];
     /**
      * Display a listing of the resource.

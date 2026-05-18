@@ -20,26 +20,25 @@
         </select>
     </div>
     <div class="form-group col-md-6">
-        <label>Course</label>
-        <select name="course_id" class="form-control js-timetable-course" required>
-            <option value="">- Select Course -</option>
-            @foreach($courses as $course)
+        <label>Course Description</label>
+        <select name="subject_id" class="form-control js-timetable-course" required>
+            <option value="">- Select Subject -</option>
+            @foreach($subjects as $subject)
                 @php
-                    // Derive a dept tag from the course code prefix
-                    $prefix = strtoupper(preg_replace('/[\s\d].*/', '', trim($course->code)));
-                    $courseDept = match(true) {
+                    $prefix = strtoupper(preg_replace('/[\s\d].*/', '', trim($subject->code)));
+                    $subjectDept = match(true) {
                         $prefix === 'IT'   => 'IT',
                         $prefix === 'EDUC' => 'EDUC',
                         $prefix === 'SHTM' => 'SHTM',
-                        default            => 'GE', // GE, PE, NSTP, etc.
+                        default            => 'GE',
                     };
                 @endphp
                 <option
-                    value="{{ $course->id }}"
-                    data-dept="{{ $courseDept }}"
-                    {{ (int) old('course_id', $entry->course_id ?? 0) === (int) $course->id ? 'selected' : '' }}
+                    value="{{ $subject->id }}"
+                    data-dept="{{ $subjectDept }}"
+                    {{ (int) old('subject_id', $entry->subject_id ?? 0) === (int) $subject->id ? 'selected' : '' }}
                 >
-                    {{ $course->code }} - {{ $course->name }}
+                    {{ $subject->code }} - {{ $subject->name }}
                 </option>
             @endforeach
         </select>

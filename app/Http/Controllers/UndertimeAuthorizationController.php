@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Notifications\PendingRequestNotification;
 use App\Notifications\RequestDecisionNotification;
 use App\Services\EmployeeRequestFormService;
+use App\Services\SchedulingDepartmentService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 
@@ -99,12 +100,46 @@ class UndertimeAuthorizationController extends Controller
             ));
         }
 
+        $employeeDepartmentKey = SchedulingDepartmentService::resolveEmployeeDepartmentKey($employee);
+        if (SchedulingDepartmentService::isValidKey($employeeDepartmentKey)) {
+            $secretaries = User::query()
+                ->where('managed_schedule_department', strtoupper((string) $employeeDepartmentKey))
+                ->whereHas('roles', function ($q) {
+                    $q->where('slug', 'secretary');
+                })
+                ->get();
+
+            foreach ($secretaries as $secretary) {
+                $secretary->notify(new PendingRequestNotification(
+                    'undertime',
+                    (int) $req->id,
+                    $employee->name ?? ('Employee #' . $employee->id),
+                    (string) $req->created_at,
+                    $adminUrl
+                ));
+            }
+        }
+
         return redirect()->route('employee.dashboard')->with('success', 'Undertime authorization form submitted successfully.');
     }
 
     public function adminIndex()
     {
+        $user = auth()->user();
         $requests = UndertimeAuthorizationRequest::with('employee')->orderByDesc('created_at')->get();
+
+        if ($user && method_exists($user, 'hasRole') && $user->hasRole('secretary')) {
+            $managedDepartment = strtoupper((string) $user->managed_schedule_department);
+            abort_unless(
+                SchedulingDepartmentService::isValidKey($managedDepartment),
+                403,
+                'Your account must have a managed department before you can review undertime requests.'
+            );
+
+            $requests = $requests->filter(function (UndertimeAuthorizationRequest $requestItem) use ($managedDepartment) {
+                return $this->requestDepartmentMatches($requestItem, $managedDepartment);
+            })->values();
+        }
 
         return view('admin.undertime-authorization', compact('requests'));
     }
@@ -200,7 +235,7 @@ class UndertimeAuthorizationController extends Controller
     {
         $user = auth()->user();
         $isAdmin = $user && method_exists($user, 'hasRole') && $user->hasRole('admin');
-        $isEmployee = $user && method_exists($user, 'hasRole') && $user->hasRole('employee');
+        $isEmployee = $user && method_exists($user, 'hasRole') && $user->hasAnyRole(['employee', 'secretary']);
 
         if ($isAdmin) {
             return;
@@ -208,7 +243,27 @@ class UndertimeAuthorizationController extends Controller
         if ($isEmployee && $user->employee && (int) $user->employee->id === (int) $requestItem->emp_id) {
             return;
         }
+        if ($user && method_exists($user, 'hasRole') && $user->hasRole('secretary')) {
+            $managedDepartment = strtoupper((string) $user->managed_schedule_department);
+            if ($this->requestDepartmentMatches($requestItem, $managedDepartment)) {
+                return;
+            }
+        }
 
         abort(403);
+    }
+
+    private function requestDepartmentMatches(UndertimeAuthorizationRequest $requestItem, ?string $departmentKey): bool
+    {
+        if (!SchedulingDepartmentService::isValidKey($departmentKey)) {
+            return false;
+        }
+
+        $employee = $requestItem->employee;
+        $requestDept = $employee
+            ? SchedulingDepartmentService::resolveEmployeeDepartmentKey($employee)
+            : SchedulingDepartmentService::inferKeyFromText($requestItem->employee_department);
+
+        return strtoupper((string) $requestDept) === strtoupper((string) $departmentKey);
     }
 }

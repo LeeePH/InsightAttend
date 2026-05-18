@@ -108,6 +108,7 @@
     .status-pill.present { background:#e4f4ea; color:#22633d; }
     .status-pill.late    { background:#fff2d9; color:#8c5a07; }
     .status-pill.absent  { background:#fde6e2; color:#9b2f24; }
+    .status-pill.pending { background:#f0f0f0; color:#6c757d; }
     .status-pill .dot    { width:8px; height:8px; border-radius:50%; background:currentColor; }
 
     /* ── Schedule table ── */
@@ -187,12 +188,12 @@
             <div class="hero-clock" id="heroPHTime">--:-- --</div>
             <div class="hero-tz">Philippine Standard Time</div>
             @php
-                $statusClass = $statusLabel === 'Present' ? 'present' : ($statusLabel === 'Late' ? 'late' : 'absent');
+                $statusClass = $statusLabel === 'Present' ? 'present' : ($statusLabel === 'Late' ? 'late' : ($statusLabel === 'Pending' ? 'pending' : 'absent'));
             @endphp
             <div class="mt-2">
                 <span class="status-pill {{ $statusClass }}" style="margin:0;background:rgba(255,255,255,.18);color:#fff;">
                     <span class="dot" style="background:#fff;"></span>
-                    Today: {{ $statusLabel }}
+                    Today: {{ $statusLabel === 'Pending' ? 'Not started' : $statusLabel }}
                 </span>
             </div>
         </div>
@@ -251,10 +252,10 @@
                     <h5 class="section-title">Today's Attendance</h5>
 
                     @php
-                        $todayStatusClass = $statusLabel === 'Present' ? 'present' : ($statusLabel === 'Late' ? 'late' : 'absent');
+                        $todayStatusClass = $statusLabel === 'Present' ? 'present' : ($statusLabel === 'Late' ? 'late' : ($statusLabel === 'Pending' ? 'pending' : 'absent'));
                     @endphp
                     <span class="status-pill {{ $todayStatusClass }}">
-                        <span class="dot"></span>{{ $statusLabel }}
+                        <span class="dot"></span>{{ $statusLabel === 'Pending' ? 'Not started yet' : $statusLabel }}
                         <span style="opacity:.6;font-weight:400;">· {{ now()->format('M d, Y') }}</span>
                     </span>
 
@@ -423,6 +424,15 @@
                                         <div style="font-size:.75rem;color:#9b2f24;text-align:center;margin-bottom:.4rem;">
                                             <i class="fa fa-camera mr-1"></i> Face verification — Early Time Out
                                         </div>
+                                        {{-- Reason field (required before camera activates) --}}
+                                        <div class="mb-2">
+                                            <textarea id="earlyTimeoutReasonFace"
+                                                      class="form-control form-control-sm"
+                                                      rows="2"
+                                                      placeholder="Reason for leaving early (required)"
+                                                      style="border-radius:8px;font-size:.8rem;resize:none;"></textarea>
+                                            <div id="earlyTimeoutReasonFaceErr" class="text-danger small mt-1" style="display:none;">Please enter a reason before proceeding.</div>
+                                        </div>
                                         <div style="position:relative;width:100%;max-width:260px;height:195px;margin:0 auto;border-radius:10px;overflow:hidden;background:#000;border:2px solid #f0b8b0;">
                                             <video id="dashVideo" autoplay playsinline style="width:100%;height:100%;object-fit:cover;"></video>
                                             <canvas id="dashCanvas" style="position:absolute;top:0;left:0;width:100%;height:100%;"></canvas>
@@ -430,13 +440,21 @@
                                         <div id="dashFaceStatus" class="text-center mt-2" style="font-size:.78rem;color:var(--emp-muted);min-height:1.2em;"></div>
                                         <form method="POST" action="{{ route('employee.timeout') }}" id="dashTimeOutForm" style="display:none;">
                                             @csrf
+                                            <input type="hidden" name="early_timeout_reason" id="dashTimeOutReasonInput">
                                         </form>
                                     @else
                                         <form method="POST" action="{{ route('employee.timeout') }}">
                                             @csrf
+                                            <div class="form-group mb-2">
+                                                <textarea name="early_timeout_reason"
+                                                          class="form-control form-control-sm"
+                                                          rows="2"
+                                                          placeholder="Reason for leaving early (required)"
+                                                          style="border-radius:8px;font-size:.8rem;resize:none;"
+                                                          required></textarea>
+                                            </div>
                                             <button type="submit" class="btn btn-danger btn-block font-weight-bold"
-                                                    style="border-radius:10px;font-size:.9rem;"
-                                                    onclick="return confirmAction(this, 'Early Time Out', 'Record an early time out now?')">
+                                                    style="border-radius:10px;font-size:.9rem;">
                                                 <i class="fa fa-sign-out mr-1"></i> Confirm Early Time Out
                                             </button>
                                         </form>

@@ -6,6 +6,7 @@ use App\Models\ClassSection;
 use App\Models\Course;
 use App\Models\Employee;
 use App\Models\EmployeeTimetableEntry;
+use App\Models\Subject;
 use App\Models\TimetableSetting;
 use App\Models\User;
 use App\Services\SchedulingDepartmentService;
@@ -93,13 +94,16 @@ class EmployeeTimetableController extends Controller
                     })
                     ->values();
 
+                // Prefer subject over legacy course
+                $subject = $entry->subject ?? $entry->course;
+
                 return [
                     'id' => $entry->id,
                     'day_of_week' => (int) $entry->day_of_week,
                     'room' => $entry->room,
                     'department_key' => $entry->department_key,
-                    'course_code' => $entry->course?->code,
-                    'course_name' => $entry->course?->name,
+                    'course_code' => $subject?->code,
+                    'course_name' => $subject?->name,
                     'section_label' => $entry->classSection?->section_label,
                     'faculty_name' => $entry->employee?->name,
                     'times' => $times,
@@ -125,7 +129,7 @@ class EmployeeTimetableController extends Controller
         $user = $request->user();
         $this->assertScheduler($user);
 
-        $query = EmployeeTimetableEntry::with(['employee.department', 'course', 'classSection'])
+        $query = EmployeeTimetableEntry::with(['employee.department', 'course', 'subject', 'classSection'])
             ->orderBy('department_key')
             ->orderBy('employee_id')
             ->orderBy('day_of_week')
@@ -158,6 +162,7 @@ class EmployeeTimetableController extends Controller
         $todayDow = (int) now()->format('N');
         $departmentLabels = SchedulingDepartmentService::labels();
         $courses = Course::query()->orderBy('code')->orderBy('name')->get();
+        $subjects = Subject::query()->orderBy('code')->orderBy('name')->get();
 
         $classSectionsQuery = ClassSection::query()->orderBy('department_key')->orderBy('year_level')->orderBy('section_label');
         if ($user->hasRole('secretary')) {
@@ -173,6 +178,7 @@ class EmployeeTimetableController extends Controller
             'entries' => $entries,
             'employees' => $employees,
             'courses' => $courses,
+            'subjects' => $subjects,
             'classSections' => $classSections,
             'todayDow' => $todayDow,
             'todayEntries' => $todayEntries,
@@ -187,16 +193,16 @@ class EmployeeTimetableController extends Controller
         $this->assertScheduler($user);
 
         $validated = $request->validate([
-            'employee_id' => ['required', 'exists:employees,id'],
-            'course_id' => ['required', 'exists:courses,id'],
-            'class_section_id' => ['nullable', 'exists:class_sections,id'],
-            'day_of_week' => ['required', 'integer', 'min:1', 'max:7'],
-            'time_start_blocks' => ['required', 'array', 'min:1'],
-            'time_start_blocks.*' => ['nullable', 'date_format:H:i'],
-            'time_end_blocks' => ['required', 'array', 'min:1'],
-            'time_end_blocks.*' => ['nullable', 'date_format:H:i'],
-            'room' => ['required', 'string', 'max:64'],
-            'department_key' => ['nullable', 'string'],
+            'employee_id'        => ['required', 'exists:employees,id'],
+            'subject_id'         => ['required', 'exists:subjects,id'],
+            'class_section_id'   => ['nullable', 'exists:class_sections,id'],
+            'day_of_week'        => ['required', 'integer', 'min:1', 'max:7'],
+            'time_start_blocks'  => ['required', 'array', 'min:1'],
+            'time_start_blocks.*'=> ['nullable', 'date_format:H:i'],
+            'time_end_blocks'    => ['required', 'array', 'min:1'],
+            'time_end_blocks.*'  => ['nullable', 'date_format:H:i'],
+            'room'               => ['required', 'string', 'max:64'],
+            'department_key'     => ['nullable', 'string'],
         ]);
 
         $employee = Employee::with('department')->findOrFail($validated['employee_id']);
@@ -251,15 +257,15 @@ class EmployeeTimetableController extends Controller
         }
 
         EmployeeTimetableEntry::create([
-            'employee_id' => $employee->id,
-            'course_id' => $validated['course_id'],
+            'employee_id'      => $employee->id,
+            'subject_id'       => $validated['subject_id'],
             'class_section_id' => $classSection?->id,
-            'day_of_week' => (int) $validated['day_of_week'],
-            'time_start' => $blocks[0]['time_start'],
-            'time_end' => $blocks[count($blocks) - 1]['time_end'],
-            'time_blocks' => $blocks,
-            'room' => trim($validated['room']),
-            'department_key' => $deptKey,
+            'day_of_week'      => (int) $validated['day_of_week'],
+            'time_start'       => $blocks[0]['time_start'],
+            'time_end'         => $blocks[count($blocks) - 1]['time_end'],
+            'time_blocks'      => $blocks,
+            'room'             => trim($validated['room']),
+            'department_key'   => $deptKey,
         ]);
 
         flash()->success('Success', count($blocks) > 1 ? 'Schedule with multiple time blocks added.' : 'Schedule entry added.');
@@ -273,16 +279,16 @@ class EmployeeTimetableController extends Controller
         $this->assertScheduler($user);
 
         $validated = $request->validate([
-            'employee_id' => ['required', 'exists:employees,id'],
-            'course_id' => ['required', 'exists:courses,id'],
-            'class_section_id' => ['nullable', 'exists:class_sections,id'],
-            'day_of_week' => ['required', 'integer', 'min:1', 'max:7'],
-            'time_start_blocks' => ['required', 'array', 'min:1'],
-            'time_start_blocks.*' => ['nullable', 'date_format:H:i'],
-            'time_end_blocks' => ['required', 'array', 'min:1'],
-            'time_end_blocks.*' => ['nullable', 'date_format:H:i'],
-            'room' => ['required', 'string', 'max:64'],
-            'department_key' => ['nullable', 'string'],
+            'employee_id'        => ['required', 'exists:employees,id'],
+            'subject_id'         => ['required', 'exists:subjects,id'],
+            'class_section_id'   => ['nullable', 'exists:class_sections,id'],
+            'day_of_week'        => ['required', 'integer', 'min:1', 'max:7'],
+            'time_start_blocks'  => ['required', 'array', 'min:1'],
+            'time_start_blocks.*'=> ['nullable', 'date_format:H:i'],
+            'time_end_blocks'    => ['required', 'array', 'min:1'],
+            'time_end_blocks.*'  => ['nullable', 'date_format:H:i'],
+            'room'               => ['required', 'string', 'max:64'],
+            'department_key'     => ['nullable', 'string'],
         ]);
 
         $employee = Employee::with('department')->findOrFail($validated['employee_id']);
@@ -338,15 +344,15 @@ class EmployeeTimetableController extends Controller
         }
 
         $entry->update([
-            'employee_id' => $employee->id,
-            'course_id' => $validated['course_id'],
+            'employee_id'      => $employee->id,
+            'subject_id'       => $validated['subject_id'],
             'class_section_id' => $classSection?->id,
-            'day_of_week' => (int) $validated['day_of_week'],
-            'time_start' => $blocks[0]['time_start'],
-            'time_end' => $blocks[count($blocks) - 1]['time_end'],
-            'time_blocks' => $blocks,
-            'room' => trim($validated['room']),
-            'department_key' => $deptKey,
+            'day_of_week'      => (int) $validated['day_of_week'],
+            'time_start'       => $blocks[0]['time_start'],
+            'time_end'         => $blocks[count($blocks) - 1]['time_end'],
+            'time_blocks'      => $blocks,
+            'room'             => trim($validated['room']),
+            'department_key'   => $deptKey,
         ]);
 
         flash()->success('Success', 'Schedule entry updated.');
@@ -371,9 +377,9 @@ class EmployeeTimetableController extends Controller
         $user = $request->user();
         $this->assertScheduler($user);
 
-        $query = EmployeeTimetableEntry::with(['employee.department', 'course', 'classSection'])
+        $query = EmployeeTimetableEntry::with(['employee.department', 'course', 'subject', 'classSection'])
             ->orderBy('department_key')
-            ->orderBy('course_id')
+            ->orderBy('subject_id')
             ->orderBy('day_of_week')
             ->orderBy('time_start');
 
@@ -411,7 +417,7 @@ class EmployeeTimetableController extends Controller
         $this->assertScheduler($user);
         abort_unless($this->canEditDepartment($user, $classSection->department_key), 403);
 
-        $entries = EmployeeTimetableEntry::with(['employee.department', 'course', 'classSection'])
+        $entries = EmployeeTimetableEntry::with(['employee.department', 'course', 'subject', 'classSection'])
             ->where('class_section_id', $classSection->id)
             ->orderBy('day_of_week')
             ->orderBy('time_start')
@@ -434,12 +440,12 @@ class EmployeeTimetableController extends Controller
     public function mySchedule(Request $request): View
     {
         $user = $request->user();
-        abort_unless($user->hasRole('employee'), 403);
+        abort_unless($user->hasAnyRole(['employee', 'secretary']), 403);
 
         $employee = $user->employee;
         abort_unless($employee, 404, 'No employee profile is linked to this account.');
 
-        $entries = EmployeeTimetableEntry::with(['employee', 'course', 'classSection'])
+        $entries = EmployeeTimetableEntry::with(['employee', 'course', 'subject', 'classSection'])
             ->where('employee_id', $employee->id)
             ->orderBy('day_of_week')
             ->orderBy('time_start')
@@ -456,12 +462,12 @@ class EmployeeTimetableController extends Controller
     public function mySchedulePreview(Request $request): View
     {
         $user = $request->user();
-        abort_unless($user->hasRole('employee'), 403);
+        abort_unless($user->hasAnyRole(['employee', 'secretary']), 403);
 
         $employee = $user->employee;
         abort_unless($employee, 404, 'No employee profile is linked to this account.');
 
-        $entries = EmployeeTimetableEntry::with(['employee', 'course', 'classSection'])
+        $entries = EmployeeTimetableEntry::with(['employee', 'course', 'subject', 'classSection'])
             ->where('employee_id', $employee->id)
             ->orderBy('day_of_week')
             ->orderBy('time_start')
@@ -478,12 +484,12 @@ class EmployeeTimetableController extends Controller
     public function mySchedulePdf(Request $request): Response
     {
         $user = $request->user();
-        abort_unless($user->hasRole('employee'), 403);
+        abort_unless($user->hasAnyRole(['employee', 'secretary']), 403);
 
         $employee = $user->employee;
         abort_unless($employee, 404, 'No employee profile is linked to this account.');
 
-        $entries = EmployeeTimetableEntry::with(['employee', 'course', 'classSection'])
+        $entries = EmployeeTimetableEntry::with(['employee', 'course', 'subject', 'classSection'])
             ->where('employee_id', $employee->id)
             ->orderBy('day_of_week')
             ->orderBy('time_start')

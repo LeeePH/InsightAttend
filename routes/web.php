@@ -20,7 +20,7 @@ Route::post('/employee/password', '\App\Http\Controllers\HomeController@updatePa
 Route::get('/employee/attendance-logs', '\App\Http\Controllers\HomeController@employeeAttendanceLogs')->name('employee.attendance_logs')->middleware('auth');
 Route::post('/employee/timein', '\App\Http\Controllers\TimeInController@employeeTimeIn')->name('employee.timein')->middleware('auth');
 Route::post('/employee/timeout', '\App\Http\Controllers\TimeInController@employeeTimeOut')->name('employee.timeout')->middleware('auth');
-Route::group(['middleware' => ['auth', 'Role'], 'roles' => ['employee']], function () {
+Route::group(['middleware' => ['auth', 'Role'], 'roles' => ['employee', 'secretary']], function () {
     Route::get('/employee/my-schedule', '\App\Http\Controllers\EmployeeTimetableController@mySchedule')->name('employee.my_schedule');
     Route::get('/employee/my-schedule/preview', '\App\Http\Controllers\EmployeeTimetableController@mySchedulePreview')->name('employee.my_schedule.preview');
     Route::get('/employee/my-schedule/pdf', '\App\Http\Controllers\EmployeeTimetableController@mySchedulePdf')->name('employee.my_schedule.pdf');
@@ -115,7 +115,6 @@ Route::group(['middleware' => ['auth', 'Role'], 'roles' => ['admin']], function 
     Route::put('/overtime-authorization/{id}/reject', '\App\Http\Controllers\OvertimeAuthorizationController@reject')->name('overtime_authorization.reject');
     Route::delete('/overtime-authorization/{id}', '\App\Http\Controllers\OvertimeAuthorizationController@destroy')->name('overtime_authorization.destroy');
     Route::get('/overtime-authorization/approval-letter/{id}', '\App\Http\Controllers\OvertimeAuthorizationController@generateApprovalLetterPdf')->name('overtime_authorization.approvalLetterPdf');
-    Route::get('/undertime-authorization', '\App\Http\Controllers\UndertimeAuthorizationController@adminIndex')->name('undertime_authorization.admin');
     Route::put('/undertime-authorization/{id}/approve', '\App\Http\Controllers\UndertimeAuthorizationController@approve')->name('undertime_authorization.approve');
     Route::put('/undertime-authorization/{id}/reject', '\App\Http\Controllers\UndertimeAuthorizationController@reject')->name('undertime_authorization.reject');
     Route::delete('/undertime-authorization/{id}', '\App\Http\Controllers\UndertimeAuthorizationController@destroy')->name('undertime_authorization.destroy');
@@ -175,6 +174,10 @@ Route::group(['middleware' => ['auth', 'Role'], 'roles' => ['admin']], function 
 
 });
 
+Route::group(['middleware' => ['auth', 'Role'], 'roles' => ['admin', 'secretary']], function () {
+    Route::get('/undertime-authorization', '\App\Http\Controllers\UndertimeAuthorizationController@adminIndex')->name('undertime_authorization.admin');
+});
+
 Route::group(['middleware' => ['auth', 'Role'], 'roles' => ['admin', 'hr', 'secretary']], function () {
     Route::get('/employee-timetable/pdf/section/{classSection}', '\App\Http\Controllers\EmployeeTimetableController@sectionPdf')->name('employee_timetable.section_pdf');
     Route::get('/employee-timetable/pdf', '\App\Http\Controllers\EmployeeTimetableController@pdf')->name('employee_timetable.pdf');
@@ -193,6 +196,9 @@ Route::group(['middleware' => ['auth', 'Role'], 'roles' => ['admin', 'hr']], fun
     Route::post('/admin/maintenance-form/courses', '\App\Http\Controllers\MaintenanceController@storeCourse')->name('admin.maintenance_form.courses.store');
     Route::put('/admin/maintenance-form/courses/{course}', '\App\Http\Controllers\MaintenanceController@updateCourse')->name('admin.maintenance_form.courses.update');
     Route::delete('/admin/maintenance-form/courses/{course}', '\App\Http\Controllers\MaintenanceController@destroyCourse')->name('admin.maintenance_form.courses.destroy');
+    Route::post('/admin/maintenance-form/subjects', '\App\Http\Controllers\MaintenanceController@storeSubject')->name('admin.maintenance_form.subjects.store');
+    Route::put('/admin/maintenance-form/subjects/{subject}', '\App\Http\Controllers\MaintenanceController@updateSubject')->name('admin.maintenance_form.subjects.update');
+    Route::delete('/admin/maintenance-form/subjects/{subject}', '\App\Http\Controllers\MaintenanceController@destroySubject')->name('admin.maintenance_form.subjects.destroy');
     Route::post('/admin/maintenance-form/timetable-settings', '\App\Http\Controllers\MaintenanceController@updateTimetableSettings')->name('admin.maintenance_form.timetable_settings.update');
 });
 

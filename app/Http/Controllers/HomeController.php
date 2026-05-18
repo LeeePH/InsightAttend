@@ -135,7 +135,7 @@ class HomeController extends Controller
 
         // Schedule rows (same logic as EmployeeTimetableController@mySchedule)
         $todayDow = (int) now()->format('N');
-        $scheduleEntries = EmployeeTimetableEntry::with(['course', 'classSection'])
+        $scheduleEntries = EmployeeTimetableEntry::with(['course', 'subject', 'classSection'])
             ->where('employee_id', $employee->id)
             ->orderBy('day_of_week')
             ->orderBy('time_start')
@@ -148,11 +148,14 @@ class HomeController extends Controller
                 ])
                 ->values();
 
+            // Prefer subject over legacy course
+            $subject = $entry->subject ?? $entry->course;
+
             return [
                 'day_of_week'   => (int) $entry->day_of_week,
                 'room'          => $entry->room,
-                'course_code'   => $entry->course?->code,
-                'course_name'   => $entry->course?->name,
+                'course_code'   => $subject?->code,
+                'course_name'   => $subject?->name,
                 'section_label' => $entry->classSection?->section_label,
                 'times'         => $times,
             ];
@@ -456,6 +459,7 @@ class HomeController extends Controller
                 $presentDays++;
                 $lateCount++;
             } elseif ($status['status_label'] === 'Absent') {
+                // Only count as absent if the grace window has already passed
                 $absenceCount++;
             }
 
@@ -492,6 +496,14 @@ class HomeController extends Controller
             }
 
             $status = AttendanceStatusService::computeForDate($employee, $cursor->copy());
+
+            // Skip today if the shift hasn't started yet — no meaningful record to show
+            if ($status['status_label'] === 'Pending') {
+                $cursor->subDay();
+                $checkedDays++;
+                continue;
+            }
+
             $items->push([
                 'date'           => $cursor->copy(),
                 'status'         => $status['status_label'],

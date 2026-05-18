@@ -197,7 +197,7 @@ class SubstitutionController extends Controller
     {
         $user = auth()->user();
         $isAdmin = $user && method_exists($user, 'hasRole') && $user->hasRole('admin');
-        $isEmployee = $user && method_exists($user, 'hasRole') && $user->hasRole('employee');
+        $isEmployee = $user && method_exists($user, 'hasRole') && $user->hasAnyRole(['employee', 'secretary']);
 
         if ($isAdmin) {
             return;

@@ -212,12 +212,34 @@ class TimeInController extends Controller
             return redirect()->route('employee.dashboard')->with('error', 'You have already timed out today.');
         }
 
+        // Determine if this is an early timeout
+        $today    = Carbon::parse(date('Y-m-d'));
+        $resolved = ShiftResolver::resolve($employee, $today);
+        $now      = Carbon::now();
+        $isEarly  = false;
+
+        if (!empty($resolved['end'])) {
+            $isEarly = $now->lt($resolved['end']);
+        }
+
+        // Require reason for early timeout
+        $reason = null;
+        if ($isEarly) {
+            $request->validate([
+                'early_timeout_reason' => ['required', 'string', 'max:500'],
+            ], [
+                'early_timeout_reason.required' => 'Please provide a reason for leaving early.',
+            ]);
+            $reason = trim($request->input('early_timeout_reason'));
+        }
+
         $attendance = new Attendance();
         $attendance->emp_id = $employee->id;
         $attendance->attendance_time = date('H:i:s');
         $attendance->attendance_date = date('Y-m-d');
         $attendance->status = 1;
         $attendance->type = 1;
+        $attendance->early_timeout_reason = $reason;
         $attendance->save();
 
         return redirect()->route('employee.dashboard')->with('success', 'Time Out recorded at ' . Carbon::parse($attendance->attendance_time)->format('g:i A') . '.');
